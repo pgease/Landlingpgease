@@ -1,103 +1,102 @@
-import { Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, Instagram, Linkedin, Twitter } from 'lucide-react';
+
+const quickLinks = [
+  { href: '#features', label: 'Features' },
+  { href: '#pricing', label: 'Pricing' },
+  { href: '#testimonials', label: 'Testimonials' },
+  { href: '#faq', label: 'FAQ' },
+];
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-gray-900 text-white pt-16 pb-8">
+    <footer id="contact" className="bg-slate-900 text-white pt-16 pb-8 scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-4 gap-8 mb-12">
-          <div className="col-span-2 md:col-span-1">
-            <img
-              src="/3477_201225_pg_ease_bs-png-01.png"
-              alt="PG Ease Logo"
-              className="mb-4 brightness-0 invert"
-              style={{ height: '10rem', width: 'auto' }}
-            />
-            <p className="text-gray-400 mb-4">
-              Powering Smarter PG Living
+        <div className="grid md:grid-cols-4 gap-10 mb-12">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              {/* <img
+                src="/pg-ease-logo.png"
+                alt="PG Ease logo"
+                className="h-8 md:h-10 w-auto brightness-0 invert opacity-90"
+              /> */}
+              <span className="text-sm md:text-base font-semibold tracking-tight">
+                PG Ease
+              </span>
+            </div>
+            <p className="text-slate-400 mb-4 max-w-sm">
+              PG Ease – India's Growing PG Network. The best PG management system for owners, co-living operators and hostel owners.
             </p>
             <a
-              href="https://instagram.com/pgease.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-[#00a0a0] hover:text-[#008080] transition-colors"
+              href="mailto:support@pgeease.in"
+              className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 font-medium transition-colors"
             >
-              <Instagram className="h-5 w-5" />
-              @pgease.in
+              <Mail className="h-5 w-5" />
+              support@pgeease.in
             </a>
           </div>
 
           <div>
-            <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+            <h3 className="font-semibold text-white mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li>
-                <a href="#features" className="text-gray-400 hover:text-white transition-colors">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#testimonials" className="text-gray-400 hover:text-white transition-colors">
-                  Testimonials
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="text-gray-400 hover:text-white transition-colors">
-                  Contact
-                </a>
-              </li>
+              {quickLinks.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h3 className="font-semibold text-lg mb-4">Legal</h3>
+            <h3 className="font-semibold text-white mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a href="/privacy" className="text-slate-400 hover:text-white transition-colors">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a href="/terms" className="text-slate-400 hover:text-white transition-colors">
                   Terms of Service
                 </a>
               </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Refund Policy
-                </a>
-              </li>
             </ul>
-          </div>
 
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Contact</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-2 text-gray-400">
-                <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span>Pune, Maharashtra, India</span>
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <Mail className="h-5 w-5 flex-shrink-0" />
-                <a href="mailto:contact@pgease.com" className="hover:text-white transition-colors">
-                  contact@pgease.com
-                </a>
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <Phone className="h-5 w-5 flex-shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-white transition-colors">
-                  +91 98765 43210
-                </a>
-              </li>
-            </ul>
+            <h3 className="font-semibold text-white mt-6 mb-4">Follow Us</h3>
+            <div className="flex gap-4">
+              <a
+                href="https://instagram.com/pgease.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter className="h-5 w-5" />
+              </a>
+              <a
+                href="#"
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 PG Ease. All rights reserved.</p>
+        <div className="border-t border-slate-800 pt-8 text-center text-slate-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} PG Ease. All rights reserved.</p>
         </div>
       </div>
     </footer>

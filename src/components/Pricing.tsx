@@ -4,24 +4,24 @@ const plans = [
   {
     name: 'FREE',
     price: '₹0',
+    period: '/ month',
     description: 'For small PGs starting digital management',
     features: [
       'Add tenants (Excel / Invite / Manual)',
       'Multi-PG / Multi-Building',
       'Notice period tracker',
       'Vacancy dashboard',
-      'Manual rent add',
-      'Manual receipt upload',
+      'Manual rent & receipt upload',
       'Complaint logging',
     ],
-    cta: 'Start Free',
+    cta: 'Start Free Trial',
     popular: false,
   },
   {
     name: 'PREMIUM',
     price: '₹19',
     period: '/ bed / month',
-    description: 'Most Popular',
+    description: 'Best for most PG owners',
     features: [
       'Everything in Free',
       'Automatic rent collection (UPI)',
@@ -32,96 +32,83 @@ const plans = [
       'Automated late fees',
       'Priority support',
     ],
-    cta: 'Upgrade Now',
+    cta: 'Start Free Trial',
     popular: true,
   },
   {
     name: 'PRO',
     price: '₹39',
     period: '/ bed / month',
-    description: 'For professional PGs',
+    description: 'For professional PGs & co-living',
     features: [
       'Everything in Premium',
       'Staff roles & permissions',
       'Expense & bill tracking',
       'Complaint threading & assignment',
       'PG website (pgname.pgease.in)',
-      'Group notifications / broadcast',
+      'Group notifications',
       'Advanced reports (PDF / Excel)',
     ],
-    cta: 'Upgrade Now',
+    cta: 'Start Free Trial',
     popular: false,
   },
 ];
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <section id="pricing" className="py-20 bg-white scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Simple Pricing. No Hidden Charges.
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            Simple, Transparent Pricing
           </h2>
-          <div className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-[#008080] to-[#00a0a0] text-white font-semibold text-lg shadow-lg mt-4">
-            🎉 50% OFF for First Month — Limited Time
-          </div>
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            No hidden charges. Start free and upgrade when you need more.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
+          {plans.map((plan, i) => (
             <div
-              key={index}
-              className={`rounded-2xl p-8 ${
+              key={i}
+              className={`relative rounded-2xl p-8 border-2 transition-all ${
                 plan.popular
-                  ? 'bg-gradient-to-b from-[#008080] to-[#006666] text-white shadow-2xl scale-105 border-4 border-[#00a0a0]'
-                  : 'bg-white text-gray-900 shadow-lg border border-gray-200'
-              } transition-transform hover:scale-105`}
+                  ? 'bg-teal-50 border-teal-500 shadow-lg shadow-teal-500/10 scale-[1.02]'
+                  : 'bg-white border-slate-200 hover:border-slate-300'
+              }`}
             >
               {plan.popular && (
-                <div className="bg-white text-[#008080] text-xs font-bold px-3 py-1 rounded-full inline-block mb-4">
-                  MOST POPULAR
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-teal-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                  RECOMMENDED
                 </div>
               )}
 
-              <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
-                {plan.name}
-              </h3>
-
-              <div className="mb-4">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                {plan.period && (
-                  <span className={`text-sm ${plan.popular ? 'text-white/80' : 'text-gray-600'}`}>
-                    {plan.period}
-                  </span>
-                )}
+              <h3 className="text-xl font-bold text-slate-900 mb-2">{plan.name}</h3>
+              <div className="mb-2">
+                <span className="text-3xl font-bold text-slate-900">{plan.price}</span>
+                <span className="text-slate-600 text-sm">{plan.period}</span>
               </div>
-
-              <p className={`mb-6 ${plan.popular ? 'text-white/90' : 'text-gray-600'}`}>
-                {plan.description}
-              </p>
+              <p className="text-slate-600 text-sm mb-6">{plan.description}</p>
 
               <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
-                      plan.popular ? 'text-white' : 'text-[#008080]'
-                    }`} />
-                    <span className={`text-sm ${plan.popular ? 'text-white' : 'text-gray-700'}`}>
-                      {feature}
-                    </span>
+                {plan.features.map((f, j) => (
+                  <li key={j} className="flex items-start gap-3">
+                    <Check className="h-5 w-5 flex-shrink-0 text-teal-600 mt-0.5" />
+                    <span className="text-slate-700 text-sm">{f}</span>
                   </li>
                 ))}
               </ul>
 
-              <button
-                className={`w-full py-3 rounded-lg font-semibold transition-all ${
+              <a
+                href="mailto:support@pgeease.in?subject=Start%20Free%20Trial%20-%20PG%20Ease"
+                className={`block w-full py-3 rounded-xl font-semibold text-center transition-colors ${
                   plan.popular
-                    ? 'bg-white text-[#008080] hover:bg-gray-100'
-                    : 'bg-[#008080] text-white hover:bg-[#006666]'
+                    ? 'bg-teal-600 text-white hover:bg-teal-700'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                 }`}
               >
                 {plan.cta}
-              </button>
+              </a>
             </div>
           ))}
         </div>

@@ -1,4 +1,19 @@
-import { Users, Home, DollarSign, MessageSquare, Shield, Wrench, UserCog, Receipt, UsersRound, FileText, Clock, Globe, Building, BarChart } from 'lucide-react';
+import {
+  Users,
+  Home,
+  DollarSign,
+  MessageSquare,
+  Shield,
+  Wrench,
+  UserCog,
+  Receipt,
+  UsersRound,
+  FileText,
+  Clock,
+  Globe,
+  Building,
+  BarChart,
+} from 'lucide-react';
 
 const features = [
   { icon: Users, title: 'Add Tenants', description: 'Excel upload, invite links, or manual entry' },
@@ -19,14 +34,14 @@ const features = [
 
 export default function OwnerFeatures() {
   return (
-    <section id="features" className="py-20 bg-gray-50">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
             Everything a PG Owner Needs — In One App
           </h2>
-          <p className="text-lg text-gray-600">
-            Comprehensive tools to manage your PG business efficiently
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Comprehensive PG management software for owners, co-living and hostels
           </p>
         </div>
 
@@ -36,15 +51,15 @@ export default function OwnerFeatures() {
             return (
               <div
                 key={index}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                className="bg-slate-50 rounded-xl p-6 border border-slate-100 hover:border-teal-100 hover:shadow-sm transition-all"
               >
-                <div className="bg-[#008080]/10 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
-                  <Icon className="h-6 w-6 text-[#008080]" />
+                <div className="bg-teal-100 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                  <Icon className="h-6 w-6 text-teal-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   {feature.description}
                 </p>
               </div>
