@@ -3,31 +3,29 @@ import Hero from './components/Hero';
 import TrustSignals from './components/TrustSignals';
 import ProblemSection from './components/ProblemSection';
 import SolutionSection from './components/SolutionSection';
-import FeatureGrid from './components/FeatureGrid';
-import OwnerFeatures from './components/OwnerFeatures';
-import Testimonials from './components/Testimonials';
+import MobileApp from './components/MobileApp';
+import HowItWorks from './components/HowItWorks';
 import Pricing from './components/Pricing';
-import FAQ from './components/FAQ';
-import AppDownload from './components/AppDownload';
+import Testimonials from './components/Testimonials';
+import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
 
 function App() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased">
       <Navbar />
       <main>
         <Hero />
         <TrustSignals />
         <ProblemSection />
         <SolutionSection />
-        <FeatureGrid />
-        <OwnerFeatures />
-        <Testimonials />
+        <MobileApp />
+        <HowItWorks />
         <Pricing />
-        <FAQ />
-        <AppDownload />
-        <Footer />
+        <Testimonials />
+        <FinalCTA />
       </main>
+      <Footer />
     </div>
   );
 }
