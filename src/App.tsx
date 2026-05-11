@@ -10,9 +10,9 @@ import Pricing from './components/Pricing';
 import Testimonials from './components/Testimonials';
 import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Terms from './pages/Terms';
-import RefundPolicy from './pages/RefundPolicy';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import Terms from './components/Terms';
+import RefundPolicy from './components/RefundPolicy';
 
 function Home() {
   return (
