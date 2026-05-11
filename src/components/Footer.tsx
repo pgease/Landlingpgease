@@ -50,6 +50,7 @@ export default function Footer() {
             >
               <Mail className="h-4 w-4" />
               support@pgeease.in
+              <p className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"> +917701953356</p>
             </a>
 
             <div className="flex gap-3 mt-5">
@@ -92,7 +93,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} PG Ease. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} PG Ease Solutions. All rights reserved.</p>
           <p>Made with care for PG owners across India.</p>
         </div>
       </div>
