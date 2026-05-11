@@ -1,4 +1,4 @@
-import { Mail, Instagram, Linkedin, Twitter } from 'lucide-react';
+import { Mail, Instagram, Linkedin, Twitter, Phone } from 'lucide-react';
 
 const footerLinks = {
   Company: [
@@ -21,9 +21,21 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { icon: Instagram, href: 'https://instagram.com/pgease.in', label: 'Instagram' },
-  { icon: Twitter, href: 'https://twitter.com/pgease', label: 'Twitter' },
-  { icon: Linkedin, href: 'https://linkedin.com/company/pgease', label: 'LinkedIn' },
+  {
+    icon: Instagram,
+    href: 'https://instagram.com/pgease.in',
+    label: 'Instagram',
+  },
+  {
+    icon: Twitter,
+    href: 'https://twitter.com/pgease',
+    label: 'Twitter',
+  },
+  {
+    icon: Linkedin,
+    href: 'https://linkedin.com/company/pgease',
+    label: 'LinkedIn',
+  },
 ];
 
 export default function Footer() {
@@ -31,7 +43,8 @@ export default function Footer() {
     <footer className="bg-slate-900 text-white pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
-          {/* Brand column */}
+          
+          {/* Brand Column */}
           <div className="col-span-2">
             <div className="flex items-center mb-4">
               <img
@@ -40,30 +53,36 @@ export default function Footer() {
                 className="h-10 w-auto"
               />
             </div>
+
             <p className="text-slate-400 text-sm leading-relaxed mb-5 max-w-sm">
               The all-in-one digital platform for PG owners to manage tenants,
               beds, rent collection, and daily operations.
             </p>
-            <div className="flex flex-col gap-2">
-  <a
-    href="mailto:support@pgeease.in"
-    className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
-  >
-    <Mail className="h-4 w-4" />
-    support@pgeease.in
-  </a>
 
-  <a
-    href="tel:+917701953356"
-    className="text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
-  >
-    +91 77019 53356
-  </a>
-</div>
+            {/* Contact Info */}
+            <div className="flex flex-col gap-3">
+              <a
+                href="mailto:support@pgeease.in"
+                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                support@pgeease.in
+              </a>
 
+              <a
+                href="tel:+917701953356"
+                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+              >
+                <Phone className="h-4 w-4" />
+                +91 77019 53356
+              </a>
+            </div>
+
+            {/* Social Links */}
             <div className="flex gap-3 mt-5">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
+
                 return (
                   <a
                     key={social.label}
@@ -80,10 +99,13 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
+          {/* Footer Links */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h3 className="font-semibold text-white text-sm mb-4">{title}</h3>
+              <h3 className="font-semibold text-white text-sm mb-4">
+                {title}
+              </h3>
+
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
@@ -100,8 +122,13 @@ export default function Footer() {
           ))}
         </div>
 
+        {/* Bottom Footer */}
         <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} PG Ease Solutions. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} PG Ease Solutions. All rights
+            reserved.
+          </p>
+
           <p>Made with care for PG owners across India.</p>
         </div>
       </div>
