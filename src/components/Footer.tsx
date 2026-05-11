@@ -44,14 +44,22 @@ export default function Footer() {
               The all-in-one digital platform for PG owners to manage tenants,
               beds, rent collection, and daily operations.
             </p>
-            <a
-              href="mailto:support@pgeease.in"
-              className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
-            >
-              <Mail className="h-4 w-4" />
-              support@pgeease.in
-              <p className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"> +917701953356</p>
-            </a>
+            <div className="flex flex-col gap-2">
+  <a
+    href="mailto:support@pgeease.in"
+    className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+  >
+    <Mail className="h-4 w-4" />
+    support@pgeease.in
+  </a>
+
+  <a
+    href="tel:+917701953356"
+    className="text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+  >
+    +91 77019 53356
+  </a>
+</div>
 
             <div className="flex gap-3 mt-5">
               {socialLinks.map((social) => {
