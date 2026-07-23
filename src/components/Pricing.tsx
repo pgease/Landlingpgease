@@ -2,40 +2,57 @@ import { Check, ArrowRight } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Basic',
-    price: '₹19',
-    period: 'per bed / month',
-    description: 'For small PGs getting started with digital management',
+    name: 'Free',
+    price: '₹0',
+    period: '',
+    description: 'For small PGs getting started with basic digital logs',
     features: [
-      'Unlimited tenants',
+      '1 Property, 2 tenants limit',
       'Tenant records & profiles',
-      'Rent tracking',
-      'Room & bed management',
-      'Rent reminders',
-      'Payment history',
-      'Basic reports',
+      'Notice period tracker',
+      'Vacancy & occupancy dashboard',
+      'Manual cash rent ledger',
+      'Basic complaint logging',
+      'WhatsApp rent reminders (MSG91)',
+      'Aadhaar e-KYC (Paid Add-on)',
+      'Digital rent agreements (Paid Add-on)',
     ],
     cta: 'Start Free',
     popular: false,
   },
   {
-    name: 'Pro',
-    price: '₹39',
+    name: 'Lite',
+    price: '₹29',
     period: 'per bed / month',
-    description: 'For growing PGs that need full automation',
+    description: 'For growing PGs wanting manual collections & WhatsApp alerts',
     features: [
-      'Everything in Basic',
-      'Analytics dashboard',
-      'Staff roles & permissions',
-      'Auto rent receipts',
-      'WhatsApp notifications',
-      'Multi-property support',
-      'Expense tracking',
-      'Advanced reports (PDF/Excel)',
-      'Priority support',
+      'Includes everything in Free, plus:',
+      'Unlimited properties & tenants',
+      'Direct UPI intent collections',
+      'Multi-PG & Multi-building view',
+      'Tenant self-onboarding flow',
+      'Direct zero-fee owner transfers',
     ],
-    cta: 'Start Free',
+    cta: 'Start Lite',
     popular: true,
+  },
+  {
+    name: 'Pro',
+    price: '₹49',
+    period: 'per bed / month',
+    description: 'Complete automation for professional operators',
+    features: [
+      'Includes everything in Lite, plus:',
+      'Automated gateway collections',
+      'Automated late fee rules',
+      'Automated rent receipts',
+      'PG Website (pgname.pgease.in)',
+      'Lead CRM & Guest logs',
+      'Group broadcasts',
+      'Priority customer support',
+    ],
+    cta: 'Go Pro',
+    popular: false,
   },
 ];
 
@@ -55,15 +72,14 @@ export default function Pricing() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {plans.map((plan, i) => (
             <article
               key={i}
-              className={`relative rounded-2xl p-8 transition-all ${
-                plan.popular
-                  ? 'bg-gradient-to-b from-brand-50 to-white border-2 border-brand-500 shadow-card'
-                  : 'bg-white border-2 border-slate-200 hover:border-slate-300'
-              }`}
+              className={`relative rounded-2xl p-8 transition-all ${plan.popular
+                ? 'bg-gradient-to-b from-brand-50 to-white border-2 border-brand-500 shadow-card'
+                : 'bg-white border-2 border-slate-200 hover:border-slate-300'
+                }`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
@@ -91,11 +107,10 @@ export default function Pricing() {
 
               <a
                 href="mailto:support@pgeease.in?subject=Start%20Free%20-%20PG%20Ease"
-                className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-semibold text-base transition-all ${
-                  plan.popular
-                    ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-600/20'
-                    : 'bg-slate-900 text-white hover:bg-slate-800'
-                }`}
+                className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-semibold text-base transition-all ${plan.popular
+                  ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-600/20'
+                  : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
               >
                 {plan.cta}
                 <ArrowRight className="h-4 w-4" />
