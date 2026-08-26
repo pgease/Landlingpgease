@@ -13,13 +13,17 @@ import Footer from './components/Footer';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Terms from './components/Terms';
 import RefundPolicy from './components/RefundPolicy';
+import { useState } from 'react';
+import BookDemoModal from './components/BookDemoModal';
 
 function Home() {
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased">
-      <Navbar />
+      <Navbar onBookDemo={() => setIsDemoOpen(true)} />
       <main>
-        <Hero />
+        <Hero onBookDemo={() => setIsDemoOpen(true)} />
         <TrustSignals />
         <ProblemSection />
         <SolutionSection />
@@ -27,9 +31,10 @@ function Home() {
         <HowItWorks />
         <Pricing />
         <Testimonials />
-        <FinalCTA />
+        <FinalCTA onBookDemo={() => setIsDemoOpen(true)} />
       </main>
       <Footer />
+      <BookDemoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} />
     </div>
   );
 }

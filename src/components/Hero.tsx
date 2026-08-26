@@ -1,6 +1,10 @@
 import { ArrowRight, Play } from 'lucide-react';
 
-export default function Hero() {
+interface HeroProps {
+  onBookDemo: () => void;
+}
+
+export default function Hero({ onBookDemo }: HeroProps) {
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 hero-bg overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,13 +34,13 @@ export default function Hero() {
                 Start Free
                 <ArrowRight className="h-4 w-4" />
               </a>
-              <a
-                href="mailto:support@pgeease.in?subject=Book%20a%20Demo%20-%20PG%20Ease"
+              <button
+                onClick={onBookDemo}
                 className="inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-7 py-3.5 rounded-xl text-base font-semibold border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
               >
                 <Play className="h-4 w-4 text-brand-600" />
                 Book Demo
-              </a>
+              </button>
             </div>
 
             <p className="text-sm text-slate-500">

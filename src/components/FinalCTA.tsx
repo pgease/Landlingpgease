@@ -1,6 +1,10 @@
 import { ArrowRight } from 'lucide-react';
 
-export default function FinalCTA() {
+interface FinalCTAProps {
+  onBookDemo: () => void;
+}
+
+export default function FinalCTA({ onBookDemo }: FinalCTAProps) {
   return (
     <section className="py-20 md:py-28 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 relative overflow-hidden">
       {/* Subtle pattern */}
@@ -33,12 +37,12 @@ export default function FinalCTA() {
             Start Free
             <ArrowRight className="h-5 w-5" />
           </a>
-          <a
-            href="mailto:support@pgeease.in?subject=Book%20a%20Demo%20-%20PG%20Ease"
+          <button
+            onClick={onBookDemo}
             className="inline-flex justify-center items-center gap-2 bg-white/10 text-white px-8 py-4 rounded-xl text-lg font-semibold border border-white/20 hover:bg-white/20 transition-all backdrop-blur-sm"
           >
             Book a Demo
-          </a>
+          </button>
         </div>
       </div>
     </section>

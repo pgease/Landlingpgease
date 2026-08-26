@@ -8,7 +8,11 @@ const navLinks = [
   { href: '#testimonials', label: 'Testimonials' },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  onBookDemo: () => void;
+}
+
+export default function Navbar({ onBookDemo }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -50,11 +54,19 @@ export default function Navbar() {
 
           <div className="hidden lg:flex items-center gap-3">
             <a
-              href="mailto:support@pgeease.in?subject=Book%20a%20Demo"
+              href="https://app.pgease.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
+            >
+              Login
+            </a>
+            <button
+              onClick={onBookDemo}
               className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
             >
               Book Demo
-            </a>
+            </button>
             <a
               href="#pricing"
               className="px-5 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
@@ -90,12 +102,23 @@ export default function Navbar() {
             ))}
             <div className="pt-3 border-t border-slate-100 space-y-2">
               <a
-                href="mailto:support@pgeease.in?subject=Book%20a%20Demo"
+                href="https://app.pgease.in/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block px-4 py-3 text-center text-slate-700 font-semibold rounded-lg border border-slate-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Book Demo
+                Login
               </a>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onBookDemo();
+                }}
+                className="block w-full px-4 py-3 text-center text-slate-700 font-semibold rounded-lg border border-slate-200"
+              >
+                Book Demo
+              </button>
               <a
                 href="#pricing"
                 className="block px-4 py-3 text-center text-white bg-brand-600 rounded-lg font-semibold"

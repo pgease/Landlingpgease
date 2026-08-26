@@ -7,7 +7,7 @@ const plans = [
     period: '',
     description: 'For small PGs getting started with basic digital logs',
     features: [
-      '1 Property, 2 tenants limit',
+      '1 Property, 10 tenants limit',
       'Tenant records & profiles',
       'Notice period tracker',
       'Vacancy & occupancy dashboard',
