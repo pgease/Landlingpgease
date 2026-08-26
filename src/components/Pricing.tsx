@@ -27,6 +27,7 @@ const plans = [
     description: 'For growing PGs wanting manual collections & WhatsApp alerts',
     features: [
       'Includes everything in Free, plus:',
+      'Dedicated Account Manager',
       'Unlimited properties & tenants',
       'Direct UPI intent collections',
       'Multi-PG & Multi-building view',
