@@ -71,7 +71,7 @@ export default function BookDemoModal({ isOpen, onClose }: BookDemoModalProps) {
       return;
     }
 
-    const message = `Hello PG Ease Team! I would like to book a demo.\n\nHere are my details:\n• Name: ${name}\n• Phone: ${phone}\n• PG Name: ${pgName}\n• Location: ${location}`;
+    const message = `Hello PG Ease Team! I would like to book a FREE demo.\n\nHere are my details:\n• Name: ${name}\n• Phone: ${phone}\n• PG Name: ${pgName}\n• Location: ${location}`;
     const waUrl = `https://wa.me/917701953356?text=${encodeURIComponent(message)}`;
     
     window.open(waUrl, '_blank', 'noopener,noreferrer');

@@ -31,7 +31,7 @@ export default function Hero({ onBookDemo }: HeroProps) {
                 href="#pricing"
                 className="inline-flex justify-center items-center gap-2 bg-brand-600 text-white px-7 py-3.5 rounded-xl text-base font-semibold hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/20 hover:shadow-xl hover:shadow-brand-600/30"
               >
-                Start Free
+                Start Now
                 <ArrowRight className="h-4 w-4" />
               </a>
               <button
@@ -39,7 +39,7 @@ export default function Hero({ onBookDemo }: HeroProps) {
                 className="inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-7 py-3.5 rounded-xl text-base font-semibold border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
               >
                 <Play className="h-4 w-4 text-brand-600" />
-                Book Demo
+                Book FREE Demo
               </button>
             </div>
 

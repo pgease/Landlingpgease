@@ -65,13 +65,13 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
               onClick={onBookDemo}
               className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
             >
-              Book Demo
+              Book FREE Demo
             </button>
             <a
               href="#pricing"
               className="px-5 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
             >
-              Start Free
+              Start Now
             </a>
           </div>
 
@@ -117,14 +117,14 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
                 }}
                 className="block w-full px-4 py-3 text-center text-slate-700 font-semibold rounded-lg border border-slate-200"
               >
-                Book Demo
+                Book FREE Demo
               </button>
               <a
                 href="#pricing"
                 className="block px-4 py-3 text-center text-white bg-brand-600 rounded-lg font-semibold"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Start Free
+                Start Now
               </a>
             </div>
           </div>

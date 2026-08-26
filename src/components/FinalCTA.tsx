@@ -41,7 +41,7 @@ export default function FinalCTA({ onBookDemo }: FinalCTAProps) {
             onClick={onBookDemo}
             className="inline-flex justify-center items-center gap-2 bg-white/10 text-white px-8 py-4 rounded-xl text-lg font-semibold border border-white/20 hover:bg-white/20 transition-all backdrop-blur-sm"
           >
-            Book a Demo
+            Book a FREE Demo
           </button>
         </div>
       </div>
