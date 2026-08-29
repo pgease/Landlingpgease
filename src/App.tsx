@@ -13,6 +13,8 @@ import Footer from './components/Footer';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import Terms from './components/Terms';
 import RefundPolicy from './components/RefundPolicy';
+import RentCollection from './components/RentCollection';
+import TenantOnboarding from './components/TenantOnboarding';
 import { useState } from 'react';
 import BookDemoModal from './components/BookDemoModal';
 
@@ -47,6 +49,9 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
+        {/* Dynamic Tenant Routes */}
+        <Route path="/rent-collection/:id" element={<RentCollection />} />
+        <Route path="/onboarding/:id" element={<TenantOnboarding />} />
       </Routes>
     </BrowserRouter>
   );
