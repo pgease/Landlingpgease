@@ -442,6 +442,12 @@ export default function TenantOnboarding() {
                 <span>1st Month Rent</span>
                 <span className="text-white font-medium">₹{data.steps.payment.breakdown.monthlyRent.toLocaleString('en-IN')}</span>
               </div>
+              {data.steps.payment.breakdown.miscFees > 0 && (
+                <div className="flex justify-between text-slate-400">
+                  <span>Maintenance & Utilities</span>
+                  <span className="text-white font-medium">₹{data.steps.payment.breakdown.miscFees.toLocaleString('en-IN')}</span>
+                </div>
+              )}
               <div className="border-t border-slate-700/80 pt-2 flex justify-between font-extrabold text-base text-white">
                 <span>Total Move-in Dues</span>
                 <span className="text-emerald-400">₹{data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')}</span>
