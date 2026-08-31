@@ -173,7 +173,7 @@ export default function TenantOnboarding() {
           fetchOnboarding();
         }
       },
-      logo: 'https://www.pgeease.in/pg-ease-logo.png',
+      logo: 'https://www.pgease.com/assets/logo.png',
       theme: {
         primaryColor: '#008080',
         secondaryColor: '#0f172a',
@@ -228,7 +228,7 @@ export default function TenantOnboarding() {
           fetchOnboarding();
         }
       },
-      logo: 'https://www.pgeease.in/pg-ease-logo.png',
+      logo: 'https://www.pgease.com/assets/logo.png',
       theme: {
         primaryColor: '#008080',
         secondaryColor: '#0f172a',
