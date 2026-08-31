@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -12,7 +12,38 @@ import {
   MapPin,
   Sparkles,
   ArrowRight,
+  Loader2,
 } from 'lucide-react';
+
+// Digio SDK v11 global type declarations
+declare global {
+  interface Window {
+    Digio?: new (options: DigioOptions) => DigioInstance;
+  }
+}
+
+interface DigioOptions {
+  environment: 'sandbox' | 'production';
+  callback: (response: DigioResponse) => void;
+  logo?: string;
+  theme?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
+  is_iframe?: boolean;
+}
+
+interface DigioResponse {
+  message?: string;
+  error_code?: string;
+  digio_doc_id?: string;
+  status?: string;
+}
+
+interface DigioInstance {
+  init: () => void;
+  submit: (documentId: string, identifier: string, tokenId?: string) => void;
+}
 
 interface OnboardingData {
   onboardingId: string;
@@ -86,6 +117,8 @@ export default function TenantOnboarding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
+  const [esignLoading, setEsignLoading] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
 
@@ -110,6 +143,109 @@ export default function TenantOnboarding() {
       setLoading(false);
     }
   };
+
+  // ─── Digio SDK: Inline KYC ───────────────────────────────────────────────
+  const handleDigioKyc = useCallback(() => {
+    if (!data?.steps.kyc.digioKycId) {
+      // Fallback: open directLink if no digioKycId
+      if (data?.steps.kyc.directLink) {
+        window.open(data.steps.kyc.directLink, '_blank');
+      }
+      return;
+    }
+
+    if (!window.Digio) {
+      alert('Digio SDK is still loading. Please try again in a moment.');
+      return;
+    }
+
+    setKycLoading(true);
+
+    const options: DigioOptions = {
+      environment: 'production',
+      callback: (response: DigioResponse) => {
+        setKycLoading(false);
+        if (response.error_code) {
+          console.error('Digio KYC error:', response);
+          alert(`KYC verification could not be completed: ${response.message || 'Unknown error'}`);
+        } else {
+          // KYC completed successfully — refresh onboarding data
+          fetchOnboarding();
+        }
+      },
+      logo: 'https://www.pgeease.in/pg-ease-logo.png',
+      theme: {
+        primaryColor: '#008080',
+        secondaryColor: '#0f172a',
+      },
+      is_iframe: true,
+    };
+
+    try {
+      const digio = new window.Digio(options);
+      digio.init();
+      digio.submit(
+        data.steps.kyc.digioKycId,
+        data.tenant.phone || data.tenant.email
+      );
+    } catch (err: any) {
+      setKycLoading(false);
+      console.error('Digio init error:', err);
+      // Fallback to directLink
+      if (data?.steps.kyc.directLink) {
+        window.open(data.steps.kyc.directLink, '_blank');
+      }
+    }
+  }, [data]);
+
+  // ─── Digio SDK: Inline eSign ─────────────────────────────────────────────
+  const handleDigioEsign = useCallback(() => {
+    if (!data?.steps.agreement.directLink) return;
+
+    // Extract documentId and identifier from the directLink URL
+    // Format: https://app.digio.in/#/gateway/login/DID.../TXN.../PHONE
+    const linkParts = data.steps.agreement.directLink.split('/');
+    const documentId = linkParts.find((p: string) => p.startsWith('DID'));
+    const identifier = data.tenant.phone || data.tenant.email;
+
+    if (!documentId || !window.Digio) {
+      // Fallback: open external link
+      window.open(data.steps.agreement.directLink, '_blank');
+      return;
+    }
+
+    setEsignLoading(true);
+
+    const options: DigioOptions = {
+      environment: 'production',
+      callback: (response: DigioResponse) => {
+        setEsignLoading(false);
+        if (response.error_code) {
+          console.error('Digio eSign error:', response);
+          alert(`eSign could not be completed: ${response.message || 'Unknown error'}`);
+        } else {
+          // eSign completed — refresh onboarding data
+          fetchOnboarding();
+        }
+      },
+      logo: 'https://www.pgeease.in/pg-ease-logo.png',
+      theme: {
+        primaryColor: '#008080',
+        secondaryColor: '#0f172a',
+      },
+      is_iframe: true,
+    };
+
+    try {
+      const digio = new window.Digio(options);
+      digio.init();
+      digio.submit(documentId, identifier);
+    } catch (err: any) {
+      setEsignLoading(false);
+      console.error('Digio eSign init error:', err);
+      window.open(data.steps.agreement.directLink, '_blank');
+    }
+  }, [data]);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -358,20 +494,28 @@ export default function TenantOnboarding() {
               </span>
             </div>
 
-            {!data.steps.kyc.isCompleted && data.steps.kyc.directLink && (
+            {!data.steps.kyc.isCompleted && (data.steps.kyc.digioKycId || data.steps.kyc.directLink) && (
               <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Government DigiLocker
+                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Government DigiLocker via Digio SDK
                 </span>
-                <a
-                  href={data.steps.kyc.directLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2"
+                <button
+                  onClick={handleDigioKyc}
+                  disabled={kycLoading}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Verify Identity via DigiLocker</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                  {kycLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Opening DigiLocker…</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Verify Identity via DigiLocker</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>
@@ -415,17 +559,25 @@ export default function TenantOnboarding() {
             {!data.steps.agreement.isCompleted && data.steps.agreement.directLink && (
               <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Legally binding Aadhaar eSign
+                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Legally binding Aadhaar eSign via Digio SDK
                 </span>
-                <a
-                  href={data.steps.agreement.directLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2"
+                <button
+                  onClick={handleDigioEsign}
+                  disabled={esignLoading}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Review & eSign Agreement</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                  {esignLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Opening eSign Portal…</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      <span>Review & eSign Agreement</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
 
