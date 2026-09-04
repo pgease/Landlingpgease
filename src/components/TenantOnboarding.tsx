@@ -12,7 +12,20 @@ import {
   MapPin,
   Sparkles,
   ArrowRight,
+  RotateCw,
+  Smartphone,
+  FileBadge,
+  UserCheck,
+  Lock,
 } from 'lucide-react';
+
+interface KycModeOption {
+  id: string;
+  name: string;
+  desc: string;
+  badge: string;
+  icon?: string;
+}
 
 interface OnboardingData {
   onboardingId: string;
@@ -50,7 +63,16 @@ interface OnboardingData {
       isCompleted: boolean;
       digioKycId?: string | null;
       directLink?: string | null;
+      mode?: string | null;
+      availableModes?: KycModeOption[];
       verifiedAt?: string | null;
+      verifiedDetails?: {
+        name?: string;
+        idNumber?: string;
+        dob?: string;
+        gender?: string;
+        address?: string;
+      } | null;
     };
     agreement: {
       stepNumber: number;
@@ -80,12 +102,38 @@ interface OnboardingData {
   };
 }
 
+const DEFAULT_KYC_MODES: KycModeOption[] = [
+  {
+    id: 'digilocker',
+    name: 'DigiLocker Aadhaar',
+    desc: 'Instant verification via government DigiLocker account',
+    badge: 'Fastest',
+  },
+  {
+    id: 'aadhaar_offline',
+    name: 'Direct Aadhaar OTP',
+    desc: 'Enter 12-digit Aadhaar & verify with UIDAI OTP (No DigiLocker needed)',
+    badge: 'UIDAI OTP',
+  },
+  {
+    id: 'id_card',
+    name: 'Government ID Upload',
+    desc: 'Upload PAN Card, Driving Licence, or Voter ID',
+    badge: 'Photo ID',
+  },
+];
+
 export default function TenantOnboarding() {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<OnboardingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+
+  // KYC Selection State
+  const [selectedKycMode, setSelectedKycMode] = useState<string>('digilocker');
+  const [switchingKycMode, setSwitchingKycMode] = useState(false);
+  const [syncingKyc, setSyncingKyc] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
 
@@ -104,10 +152,58 @@ export default function TenantOnboarding() {
       }
       const json = await res.json();
       setData(json);
+      if (json.steps?.kyc?.mode) {
+        setSelectedKycMode(json.steps.kyc.mode);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load onboarding details.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSwitchKycMode = async (mode: string) => {
+    if (!id || mode === selectedKycMode || data?.steps.kyc.isCompleted || switchingKycMode) return;
+    try {
+      setSwitchingKycMode(true);
+      setSelectedKycMode(mode);
+      const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/initiate-kyc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      });
+      const json = await res.json();
+      if (res.ok && json.directLink) {
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            steps: {
+              ...prev.steps,
+              kyc: {
+                ...prev.steps.kyc,
+                directLink: json.directLink,
+                mode: json.mode,
+                digioKycId: json.digioKycId,
+                status: json.status || 'requested',
+              },
+            },
+          };
+        });
+      }
+    } catch (err) {
+      console.error('Error switching KYC mode:', err);
+    } finally {
+      setSwitchingKycMode(false);
+    }
+  };
+
+  const handleSyncKyc = async () => {
+    try {
+      setSyncingKyc(true);
+      await fetchOnboarding();
+    } finally {
+      setSyncingKyc(false);
     }
   };
 
@@ -247,6 +343,9 @@ export default function TenantOnboarding() {
     data.steps.payment.isCompleted,
   ].filter(Boolean).length;
 
+  const kycModes = data.steps.kyc.availableModes || DEFAULT_KYC_MODES;
+  const activeModeObj = kycModes.find((m) => m.id === selectedKycMode) || kycModes[0];
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
       {/* Top Header matching Landing Page */}
@@ -322,7 +421,7 @@ export default function TenantOnboarding() {
       <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 flex-1">
         <div className="space-y-6">
           
-          {/* STEP 1: DigiLocker KYC */}
+          {/* STEP 1: Digital Identity & Multi-Option KYC Verification */}
           <div className={`bg-white border rounded-3xl p-6 sm:p-7 transition-all shadow-card ${
             data.steps.kyc.isCompleted 
               ? 'border-emerald-200 bg-emerald-50/20 ring-1 ring-emerald-500/20' 
@@ -339,7 +438,7 @@ export default function TenantOnboarding() {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
-                    Digital Aadhaar KYC Verification
+                    Digital Identity & KYC Verification
                     {data.steps.kyc.isCompleted && (
                       <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
                         Verified ✓
@@ -347,7 +446,7 @@ export default function TenantOnboarding() {
                     )}
                   </h3>
                   <p className="text-slate-600 text-sm mt-1">
-                    Instant, 100% paperless government verification via DigiLocker.
+                    100% paperless government verification. Choose your preferred verification method below.
                   </p>
                 </div>
               </div>
@@ -358,20 +457,109 @@ export default function TenantOnboarding() {
               </span>
             </div>
 
-            {!data.steps.kyc.isCompleted && data.steps.kyc.directLink && (
-              <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Government DigiLocker
-                </span>
-                <a
-                  href={data.steps.kyc.directLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2"
-                >
-                  <span>Verify Identity via DigiLocker</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+            {/* When KYC is already completed */}
+            {data.steps.kyc.isCompleted ? (
+              <div className="mt-5 pt-4 border-t border-emerald-100">
+                <div className="bg-white/80 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                      <UserCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">
+                        {data.steps.kyc.verifiedDetails?.name || data.tenant.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        {data.steps.kyc.verifiedDetails?.idNumber ? `ID: ${data.steps.kyc.verifiedDetails.idNumber}` : 'Government Verified'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/60 px-3 py-1 rounded-full border border-emerald-200">
+                    Aadhaar / DigiLocker Confirmed
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* When KYC is pending: Show Mode Options Selector */
+              <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Select Verification Method:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {kycModes.map((mode) => {
+                    const isSelected = selectedKycMode === mode.id;
+                    const Icon =
+                      mode.id === 'digilocker'
+                        ? ShieldCheck
+                        : mode.id === 'aadhaar_offline'
+                        ? Smartphone
+                        : FileBadge;
+
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        onClick={() => handleSwitchKycMode(mode.id)}
+                        disabled={switchingKycMode}
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-brand-600 bg-brand-50/40 shadow-sm ring-1 ring-brand-500/30'
+                            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between w-full">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            isSelected ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                            isSelected ? 'bg-brand-100 text-brand-700 border border-brand-200' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {mode.badge}
+                          </span>
+                        </div>
+                        <div className="mt-3">
+                          <p className="text-xs font-extrabold text-slate-900">{mode.name}</p>
+                          <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{mode.desc}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Launch Verification & Status Refresh Bar */}
+                <div className="pt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Digio & Government UIDAI
+                  </span>
+
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={handleSyncKyc}
+                      disabled={syncingKyc}
+                      title="Sync verification status from Digio"
+                      className="px-3 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 transition flex items-center gap-1.5 shrink-0"
+                    >
+                      <RotateCw className={`w-3.5 h-3.5 ${syncingKyc ? 'animate-spin text-brand-600' : ''}`} />
+                      <span>{syncingKyc ? 'Checking...' : 'Refresh Status'}</span>
+                    </button>
+
+                    {data.steps.kyc.directLink && (
+                      <a
+                        href={data.steps.kyc.directLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2"
+                      >
+                        <span>Verify via {activeModeObj.name}</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
