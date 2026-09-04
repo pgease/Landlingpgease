@@ -1,17 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ShieldCheck,
   FileText,
-  CreditCard,
   Building,
-  CheckCircle2,
-  ExternalLink,
   Download,
-  Phone,
-  MapPin,
   Sparkles,
-  ArrowRight,
   Loader2,
 } from 'lucide-react';
 

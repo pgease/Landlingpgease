@@ -1,17 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  CreditCard,
-  Building,
   CheckCircle2,
   Calendar,
-  User,
   ShieldCheck,
-  Zap,
-  Receipt,
-  Download,
-  AlertCircle,
-  Home,
 } from 'lucide-react';
 
 interface RentCollectionData {

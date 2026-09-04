@@ -1,4 +1,5 @@
-import { Mail, Instagram, Linkedin, Twitter, Phone, MessageCircle } from 'lucide-react';
+import { Mail, Instagram, Linkedin, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -16,6 +17,7 @@ const footerLinks = {
     { label: 'About', href: '#' },
     { label: 'Careers', href: '#' },
     { label: 'Blog', href: '#' },
+    { label: 'Demo', href: '/demo' },
     { label: 'Owner Login', href: 'https://app.pgease.in/' },
     { label: 'Contact', href: 'mailto:support@pgease.in' },
   ],
@@ -131,12 +133,21 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-slate-400 hover:text-white text-sm transition-colors"
-                    >
-                      {link.label}
-                    </a>
+                    {link.href.startsWith('/') ? (
+                      <Link
+                        to={link.href}
+                        className="text-slate-400 hover:text-white text-sm transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-slate-400 hover:text-white text-sm transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>

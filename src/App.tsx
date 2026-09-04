@@ -15,6 +15,7 @@ import Terms from './components/Terms';
 import RefundPolicy from './components/RefundPolicy';
 import RentCollection from './components/RentCollection';
 import TenantOnboarding from './components/TenantOnboarding';
+import DemoDeck from './components/DemoDeck';
 import { useState } from 'react';
 import BookDemoModal from './components/BookDemoModal';
 
@@ -46,6 +47,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/demo" element={<DemoDeck />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
