@@ -1,10 +1,14 @@
-import { ArrowRight, Play } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, Play, MapPin, Search, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HeroProps {
   onBookDemo: () => void;
 }
 
 export default function Hero({ onBookDemo }: HeroProps) {
+  const [searchCity, setSearchCity] = useState('');
+
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 hero-bg overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,7 +17,7 @@ export default function Hero({ onBookDemo }: HeroProps) {
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-6 tracking-wide uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-              PG Management Platform
+              Delhi NCR's Leading PG Platform
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-slate-900 leading-[1.1] tracking-tight mb-6 text-balance">
@@ -23,10 +27,10 @@ export default function Hero({ onBookDemo }: HeroProps) {
 
             <p className="text-lg text-slate-600 leading-relaxed mb-8 max-w-lg">
               PG Ease helps PG owners manage tenants, beds, rent and operations
-              in one simple platform. No spreadsheets. No WhatsApp chaos.
+              in one simple platform, while helping tenants discover verified stays with zero brokerage.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <a
                 href="#pricing"
                 className="inline-flex justify-center items-center gap-2 bg-brand-600 text-white px-7 py-3.5 rounded-xl text-base font-semibold hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/20 hover:shadow-xl hover:shadow-brand-600/30"
@@ -43,8 +47,34 @@ export default function Hero({ onBookDemo }: HeroProps) {
               </button>
             </div>
 
-            <p className="text-sm text-slate-500">
-              Free forever for up to 10 beds. No credit card required.
+            {/* Tenant Quick PG Finder Box */}
+            <div className="p-3 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-md flex flex-col sm:flex-row items-center gap-2 mb-4">
+              <div className="flex-1 w-full flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
+                <MapPin className="w-4 h-4 text-teal-600 shrink-0" />
+                <select
+                  value={searchCity}
+                  onChange={(e) => setSearchCity(e.target.value)}
+                  className="bg-transparent text-xs font-semibold text-slate-700 outline-none w-full cursor-pointer"
+                >
+                  <option value="">Search all Delhi NCR</option>
+                  <option value="Noida">Noida (Sector 62, 63)</option>
+                  <option value="Gurgaon">Gurugram (DLF Phase 1, Cyber City)</option>
+                  <option value="Delhi">Delhi (Satya Niketan, South Campus)</option>
+                </select>
+              </div>
+
+              <Link
+                to={searchCity ? `/find-properties?city=${searchCity}` : '/find-properties'}
+                className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Explore Stays</span>
+              </Link>
+            </div>
+
+            <p className="text-xs text-slate-500 flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span>Free forever up to 10 beds for owners • Zero brokerage for tenants</span>
             </p>
           </div>
 

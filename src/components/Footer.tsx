@@ -12,28 +12,6 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const footerLinks = {
-  Company: [
-    { label: 'About', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Blog', href: '#' },
-    { label: 'Demo', href: '/demo' },
-    { label: 'Owner Login', href: 'https://app.pgease.in/' },
-    { label: 'Contact', href: 'mailto:support@pgease.in' },
-  ],
-  Product: [
-    { label: 'Features', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Mobile App', href: '#' },
-  ],
-  Legal: [
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
-    { label: 'Refund Policy', href: '/refund-policy' },
-  ],
-};
-
 const socialLinks = [
   {
     icon: Instagram,
@@ -54,66 +32,64 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-900 text-white pt-16 pb-8">
+    <footer className="bg-slate-900 text-white pt-16 pb-8 border-t border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
           
-          {/* Brand Column */}
-          <div className="col-span-2">
-            <div className="flex items-center mb-4">
+          {/* Brand Column (spans 2) */}
+          <div className="col-span-2 space-y-4">
+            <Link to="/" className="inline-block">
               <img
                 src="/assets/logo-transparent.png"
                 alt="PG Ease"
-                className="h-10 w-auto"
+                className="h-9 w-auto"
               />
-            </div>
+            </Link>
 
-            <p className="text-slate-400 text-sm leading-relaxed mb-5 max-w-sm">
-              The all-in-one digital platform for PG owners to manage tenants,
-              beds, rent collection, and daily operations.
+            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
+              The modern digital operating platform for PG owners and verified stay discovery across Delhi NCR.
             </p>
 
-            {/* Contact Info */}
-            <div className="flex flex-col gap-3">
+            {/* Direct Contact Info */}
+            <div className="flex flex-col gap-2.5 pt-1 text-sm">
               <a
                 href="mailto:support@pgease.in"
-                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors"
               >
-                <Mail className="h-4 w-4" />
-                support@pgease.in
+                <Mail className="h-4 w-4 shrink-0" />
+                <span>support@pgease.in</span>
               </a>
 
               <a
                 href="tel:+917701953356"
-                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors"
               >
-                <Phone className="h-4 w-4" />
-                +91 77019 53356
+                <Phone className="h-4 w-4 shrink-0" />
+                <span>+91 77019 53356</span>
               </a>
 
               <a
                 href="https://wa.me/917701953356"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                <WhatsAppIcon className="h-4 w-4" />
-                +91 77019 53356
+                <WhatsAppIcon className="h-4 w-4 shrink-0" />
+                <span>+91 77019 53356 (WhatsApp)</span>
               </a>
             </div>
 
             {/* Social Links */}
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-2.5 pt-2">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
-
                 return (
                   <a
                     key={social.label}
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-9 h-9 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white transition-all"
+                    className="w-8 h-8 bg-slate-800 hover:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white transition-all"
                     aria-label={social.label}
                   >
                     <Icon className="h-4 w-4" />
@@ -123,45 +99,119 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Footer Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h3 className="font-semibold text-white text-sm mb-4">
-                {title}
-              </h3>
+          {/* Explore PGs */}
+          <div>
+            <h3 className="font-semibold text-white text-sm mb-4">Explore PGs</h3>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li>
+                <Link to="/find-properties" className="hover:text-white transition-colors">
+                  Find Properties
+                </Link>
+              </li>
+              <li>
+                <Link to="/find-properties?city=Noida" className="hover:text-white transition-colors">
+                  PGs in Noida
+                </Link>
+              </li>
+              <li>
+                <Link to="/find-properties?city=Gurgaon" className="hover:text-white transition-colors">
+                  PGs in Gurugram
+                </Link>
+              </li>
+              <li>
+                <Link to="/find-properties?city=Delhi" className="hover:text-white transition-colors">
+                  PGs in Delhi
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-              <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    {link.href.startsWith('/') ? (
-                      <Link
-                        to={link.href}
-                        className="text-slate-400 hover:text-white text-sm transition-colors"
-                      >
-                        {link.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={link.href}
-                        className="text-slate-400 hover:text-white text-sm transition-colors"
-                      >
-                        {link.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Product */}
+          <div>
+            <h3 className="font-semibold text-white text-sm mb-4">Product</h3>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li>
+                <a href="/#features" className="hover:text-white transition-colors">
+                  Features
+                </a>
+              </li>
+              <li>
+                <a href="/#pricing" className="hover:text-white transition-colors">
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <Link to="/demo" className="hover:text-white transition-colors">
+                  Interactive Demo
+                </Link>
+              </li>
+              <li>
+                <Link to="/list-your-property" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+                  List Your Property
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="font-semibold text-white text-sm mb-4">Company</h3>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li>
+                <Link to="/careers" className="hover:text-white transition-colors">
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="hover:text-white transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://app.pgease.in/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
+                  Owner Login
+                </a>
+              </li>
+              <li>
+                <a href="mailto:support@pgease.in" className="hover:text-white transition-colors">
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold text-white text-sm mb-4">Legal</h3>
+            <ul className="space-y-2.5 text-sm text-slate-400">
+              <li>
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/refund-policy" className="hover:text-white transition-colors">
+                  Refund Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
         {/* Bottom Footer */}
         <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
-          <p>
-            &copy; {2025} PG Ease Solutions. All rights
-            reserved.
-          </p>
-
+          <p>&copy; {new Date().getFullYear()} PG Ease Solutions Pvt Ltd. All rights reserved.</p>
           <p>Made specially for Indian PG & Hostel owners.</p>
         </div>
       </div>

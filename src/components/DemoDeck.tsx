@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ShieldCheck,
   CheckCircle2,
-  AlertTriangle,
   Sparkles,
   Globe,
   Headphones,
@@ -28,16 +27,10 @@ import {
   Building2,
   Users,
   Smartphone,
-  ShieldAlert,
   Key,
-  X,
-  XCircle,
   Server,
-  Lock,
   Code2,
-  Zap,
   TrendingUp,
-  Eye,
 } from 'lucide-react';
 
 interface DiscoveryOption {

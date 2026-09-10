@@ -7,12 +7,10 @@ import {
   Download,
   Sparkles,
   Loader2,
-  ArrowRight,
   RotateCw,
   Smartphone,
   FileBadge,
   UserCheck,
-  Lock,
   ExternalLink,
 } from 'lucide-react';
 
