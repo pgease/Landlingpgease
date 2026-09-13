@@ -1,59 +1,43 @@
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Sparkles, Clock } from 'lucide-react';
 
 const plans = [
   {
-    name: 'Free',
-    price: '₹0',
-    period: '',
-    description: 'For small PGs getting started with basic digital logs',
-    features: [
-      '1 Property, 10 tenants limit',
-      'Tenant records & profiles',
-      'Notice period tracker',
-      'Vacancy & occupancy dashboard',
-      'Manual cash rent ledger',
-      'Basic complaint logging',
-      'WhatsApp rent reminders (MSG91)',
-      'Aadhaar e-KYC (Paid Add-on)',
-      'Digital rent agreements (Paid Add-on)',
-    ],
-    cta: 'Start Free',
-    popular: false,
-  },
-  {
-    name: 'Lite',
+    name: 'Lite Plan',
     price: '₹29',
     period: 'per bed / month',
-    description: 'For growing PGs wanting manual collections & WhatsApp alerts',
+    badge: '45-DAY FREE TRIAL',
+    description: 'Direct UPI payments with 0% gateway fee, manual verification & full operations.',
     features: [
-      'Includes everything in Free, plus:',
-      'Dedicated Account Manager',
-      'Unlimited properties & tenants',
-      'Direct UPI intent collections',
-      'Multi-PG & Multi-building view',
-      'Tenant self-onboarding flow',
-      'Direct zero-fee owner transfers',
+      '45-Day Free Trial on signup',
+      'Direct UPI intent collection (0% fee)',
+      'Manual payment verification (Approve / Reject)',
+      'Dedicated Account Manager included',
+      'Unlimited properties, rooms & tenants',
+      'DigiLocker Aadhaar KYC verification',
+      'Electricity meter billing calculation',
+      'Real-time vacancy & occupancy dashboard',
     ],
-    cta: 'Start Lite',
-    popular: true,
+    cta: 'Claim 45-Day Free Trial',
+    popular: false,
   },
   {
-    name: 'Pro',
+    name: 'Pro Plan',
     price: '₹49',
     period: 'per bed / month',
-    description: 'Complete automation for professional operators',
+    badge: 'RECOMMENDED',
+    description: 'Complete automation with payment gateway, T+2 settlement & dedicated PG website.',
     features: [
       'Includes everything in Lite, plus:',
-      'Automated gateway collections',
-      'Automated late fee rules',
-      'Automated rent receipts',
-      'PG Website (pgname.pgease.in)',
-      'Lead CRM & Guest logs',
-      'Group broadcasts',
-      'Priority customer support',
+      'Automated payment gateway collections',
+      'Automated Settlement (T+2 direct bank transfer)',
+      'Dedicated PG Website (pgname.pgease.in)',
+      'Dedicated Account Manager included',
+      'Digital rental agreement eSign',
+      'Automated WhatsApp rent reminders & notices',
+      'Granular staff roles & permissions',
     ],
-    cta: 'Go Pro',
-    popular: false,
+    cta: 'Upgrade to Pro Plan',
+    popular: true,
   },
 ];
 
@@ -69,46 +53,50 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Pay only for what you use. No hidden charges. No long-term contracts.
+            Choose between Lite and Pro. Enjoy a 45-day free trial on Lite with zero commitment.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, i) => (
             <article
               key={i}
-              className={`relative rounded-2xl p-8 transition-all ${plan.popular
-                ? 'bg-gradient-to-b from-brand-50 to-white border-2 border-brand-500 shadow-card'
-                : 'bg-white border-2 border-slate-200 hover:border-slate-300'
+              className={`relative rounded-3xl p-8 sm:p-10 transition-all flex flex-col justify-between ${plan.popular
+                ? 'bg-gradient-to-b from-brand-50/60 to-white border-2 border-brand-500 shadow-xl shadow-brand-500/10'
+                : 'bg-white border-2 border-slate-200 hover:border-slate-300 shadow-sm'
                 }`}
             >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
-                  RECOMMENDED
+              {plan.badge && (
+                <div className={`absolute -top-3.5 left-1/2 -translate-x-1/2 text-white text-[11px] font-extrabold tracking-wider px-4 py-1 rounded-full shadow-sm ${
+                  plan.popular ? 'bg-brand-600' : 'bg-amber-500'
+                }`}>
+                  {plan.badge}
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold text-slate-900 mb-1">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-extrabold text-slate-900">{plan.price}</span>
-                <span className="text-slate-500 text-sm font-medium">{plan.period}</span>
-              </div>
-              <p className="text-slate-600 text-sm mb-6">{plan.description}</p>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-1">{plan.name}</h3>
+                <div className="flex items-baseline gap-1.5 mb-2 mt-2">
+                  <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">{plan.price}</span>
+                  <span className="text-slate-500 text-sm font-medium">{plan.period}</span>
+                </div>
+                <p className="text-slate-600 text-sm mb-6 min-h-[40px]">{plan.description}</p>
 
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="h-3 w-3 text-brand-700" />
-                    </div>
-                    <span className="text-slate-700 text-sm">{f}</span>
-                  </li>
-                ))}
-              </ul>
+                <ul className="space-y-3 mb-8 border-t border-slate-100 pt-6">
+                  {plan.features.map((f, j) => (
+                    <li key={j} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="h-3 w-3 text-brand-700" />
+                      </div>
+                      <span className="text-slate-700 text-sm font-medium">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               <a
-                href="mailto:support@pgeease.in?subject=Start%20Free%20-%20PG%20Ease"
-                className={`flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-semibold text-base transition-all ${plan.popular
+                href="https://owner.pgease.in"
+                className={`flex items-center justify-center gap-2 w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all ${plan.popular
                   ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-600/20'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
@@ -120,9 +108,9 @@ export default function Pricing() {
           ))}
         </div>
 
-        <div className="text-center mt-10">
-          <p className="text-sm text-slate-500">
-            All plans include a free trial. No credit card required to get started.
+        <div className="text-center mt-12">
+          <p className="text-sm font-medium text-slate-500">
+            ⏰ All new PG owners receive an instant 45-day free trial of Lite Plan upon registration. No credit card required.
           </p>
         </div>
       </div>

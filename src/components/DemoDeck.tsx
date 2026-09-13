@@ -1797,84 +1797,14 @@ export default function DemoDeck() {
               </div>
             </div>
 
-            {/* 3 SAAS PRICING CARDS (BALANCED HEIGHTS, MODERN TYPOGRAPHY & HIGH-CONVERTING CTAS) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-              {/* 1. Free Plan */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6">
-                <div className="space-y-5">
-                  {/* Card Header */}
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-3 py-1 rounded-full inline-block">
-                      Starter Tier
-                    </span>
-                    <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                      Free Plan
-                    </h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      For micro-PGs starting out with basic digital rent tracking
-                    </p>
-                  </div>
-
-                  {/* Pricing Display */}
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-1">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-4xl font-black text-slate-900 tracking-tight">
-                        ₹0
-                      </span>
-                      <span className="text-xs font-semibold text-slate-500">/ month</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-slate-600 block">
-                      Free Forever • Cap: 1 Property / 10 Tenants
-                    </span>
-                  </div>
-
-                  {/* Feature Highlights */}
-                  <div className="space-y-3 pt-1">
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
-                      Included in Free:
-                    </span>
-                    <ul className="space-y-2.5 text-xs text-slate-600">
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>Up to <strong>10 Tenants & 1 Property</strong></span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span><strong>PG Ease Tenant Mobile App</strong> included</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>UPI Intent Payment (Owner manual verify)</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>WhatsApp Due Reminders & Receipts</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>Electricity Meter Splitter & Complaints Desk</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Card Footer CTA */}
-                <div className="pt-4 border-t border-slate-100 space-y-2">
-                  <div className="w-full text-center py-3 px-4 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 border border-slate-200">
-                    Basic Starter Access
-                  </div>
-                  <p className="text-[11px] text-center text-slate-400 font-medium">
-                    No credit card needed • Free forever
-                  </p>
-                </div>
-              </div>
-
-              {/* 2. Lite Plan (RECOMMENDED WITH CORNER LAUNCH OFFER RIBBON) */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-[#008080] shadow-xl relative flex flex-col justify-between space-y-6 transform lg:-translate-y-2 overflow-hidden ring-4 ring-teal-500/10">
-                {/* DIAGONAL CORNER RIBBON: LAUNCH OFFER */}
-                <div className="absolute top-0 right-0 w-36 h-36 overflow-hidden pointer-events-none z-10">
-                  <div className="absolute transform rotate-45 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black text-[10px] tracking-wider uppercase py-1.5 right-[-42px] top-[24px] w-[155px] text-center shadow-md">
-                    🔥 Launch Offer
+            {/* 2 SAAS PRICING CARDS (BALANCED HEIGHTS, MODERN TYPOGRAPHY & HIGH-CONVERTING CTAS) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
+              {/* 1. Lite Plan (RECOMMENDED WITH 45-DAY FREE TRIAL CORNER RIBBON) */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#008080] shadow-xl relative flex flex-col justify-between space-y-6 overflow-hidden ring-4 ring-teal-500/10">
+                {/* DIAGONAL CORNER RIBBON: 45-DAY FREE TRIAL */}
+                <div className="absolute top-0 right-0 w-40 h-40 overflow-hidden pointer-events-none z-10">
+                  <div className="absolute transform rotate-45 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white font-black text-[10px] tracking-wider uppercase py-1.5 right-[-40px] top-[28px] w-[170px] text-center shadow-md">
+                    🎁 45-Day Trial
                   </div>
                 </div>
 
@@ -1882,13 +1812,13 @@ export default function DemoDeck() {
                   {/* Card Header */}
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-black uppercase tracking-wider text-white bg-[#008080] px-3 py-1 rounded-full inline-block shadow-xs">
-                      ⭐ Recommended Choice
+                      ⭐ 45-Day Free Trial Included
                     </span>
                     <h3 className="text-2xl font-extrabold text-[#013a3c] tracking-tight">
                       Lite Plan
                     </h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Complete digital automation for growing PGs
+                      Zero gateway fee payments via UPI intent, manual verification & full operations
                     </p>
                   </div>
 
@@ -1918,28 +1848,36 @@ export default function DemoDeck() {
                   {/* Feature Highlights */}
                   <div className="space-y-3 pt-1">
                     <span className="text-[11px] font-black uppercase tracking-wider text-[#00595c] block">
-                      Everything in Free, plus:
+                      Lite Plan Inclusions:
                     </span>
                     <ul className="space-y-2.5 text-xs text-slate-700">
                       <li className="flex items-start gap-2.5 font-bold text-slate-900">
+                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
+                        <span><strong>45-Day Free Trial</strong> on initial signup (₹0 upfront)</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 font-bold text-slate-900">
+                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
+                        <span><strong>Direct UPI Intent Collection (0% transaction fee)</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2.5 font-bold text-slate-900">
+                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
+                        <span><strong>Manual Payment Verification (Approve / Reject)</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2.5 font-bold text-slate-900">
+                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
+                        <span><strong>Personal Dedicated Account Manager</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
                         <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
                         <span><strong>Unlimited Properties & Unlimited Beds</strong></span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
-                        <span><strong>PG Search Listing & Direct Leads</strong></span>
+                        <span>DigiLocker Aadhaar KYC & Electricity Meter Splitter</span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
-                        <span><strong>Staff Accounts</strong> (Wardens, Cooks, Managers)</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
-                        <span>Automated Late Fee Rules & Collections</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-[#008080] shrink-0 mt-0.5" />
-                        <span><strong>Personal Dedicated Account Manager</strong></span>
+                        <span>Tenant Mobile App & Real-Time Occupancy Dashboard</span>
                       </li>
                     </ul>
                   </div>
@@ -1947,18 +1885,18 @@ export default function DemoDeck() {
 
                 {/* Card Footer CTA */}
                 <div className="pt-4 border-t border-teal-100 space-y-2">
-                  <div className="w-full text-center py-3 px-4 rounded-xl font-extrabold text-xs bg-[#008080] text-white shadow-sm flex items-center justify-center gap-1.5 hover:bg-[#007070] transition-colors cursor-pointer">
-                    <span>Most Popular for PG Owners</span>
+                  <div className="w-full text-center py-3.5 px-4 rounded-xl font-extrabold text-xs bg-[#008080] text-white shadow-sm flex items-center justify-center gap-1.5 hover:bg-[#007070] transition-colors cursor-pointer">
+                    <span>Claim 45-Day Free Trial</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                   <p className="text-[11px] text-center text-teal-700 font-semibold">
-                    Pay ₹0 until 100% tenants are listed
+                    Instant activation • No credit card required
                   </p>
                 </div>
               </div>
 
-              {/* 3. Pro Plan */}
-              <div className="bg-gradient-to-br from-[#004245] via-[#013336] to-[#012224] text-white rounded-3xl p-6 sm:p-7 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden border border-teal-700/50">
+              {/* 2. Pro Plan (COMPLETE AUTOMATION & CUSTOM PG WEBSITE) */}
+              <div className="bg-gradient-to-br from-[#004245] via-[#013336] to-[#012224] text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between space-y-6 relative overflow-hidden border border-teal-700/50">
                 <div className="space-y-5">
                   {/* Card Header */}
                   <div className="space-y-1.5">
@@ -1969,7 +1907,7 @@ export default function DemoDeck() {
                       Pro Plan
                     </h3>
                     <p className="text-xs text-teal-200 leading-relaxed">
-                      Full automation & dedicated custom PG website
+                      Payment gateway, automated settlement & dedicated PG website
                     </p>
                   </div>
 
@@ -2008,7 +1946,15 @@ export default function DemoDeck() {
                       </li>
                       <li className="flex items-start gap-2.5 font-bold text-white">
                         <Check className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-                        <span><strong>Auto Payment Gateway (T+2 Settlement)</strong></span>
+                        <span><strong>Automated Payment Gateway Collection</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2.5 font-bold text-white">
+                        <Check className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                        <span><strong>Automated Settlement (T+2 Direct Bank Transfer)</strong></span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-teal-300 shrink-0 mt-0.5" />
+                        <span><strong>Personal Dedicated Account Manager</strong> (Rahul Sharma)</span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <Check className="w-4 h-4 text-teal-300 shrink-0 mt-0.5" />
@@ -2016,11 +1962,7 @@ export default function DemoDeck() {
                       </li>
                       <li className="flex items-start gap-2.5">
                         <Check className="w-4 h-4 text-teal-300 shrink-0 mt-0.5" />
-                        <span><strong>Personal Account Manager</strong> (Direct phone & WA)</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <Check className="w-4 h-4 text-teal-300 shrink-0 mt-0.5" />
-                        <span>Exclusive Local PG Owner Community Access</span>
+                        <span>Digital Rental Agreement eSign & Automated WhatsApp alerts</span>
                       </li>
                     </ul>
                   </div>
@@ -2028,8 +1970,8 @@ export default function DemoDeck() {
 
                 {/* Card Footer CTA */}
                 <div className="pt-4 border-t border-white/15 space-y-2">
-                  <div className="w-full text-center py-3 px-4 rounded-xl font-extrabold text-xs bg-white text-[#013a3c] shadow-sm flex items-center justify-center gap-1.5 hover:bg-teal-50 transition-colors cursor-pointer">
-                    <span>Full Hands-Off Automation</span>
+                  <div className="w-full text-center py-3.5 px-4 rounded-xl font-extrabold text-xs bg-white text-[#013a3c] shadow-sm flex items-center justify-center gap-1.5 hover:bg-teal-50 transition-colors cursor-pointer">
+                    <span>Upgrade to Pro Plan</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                   <p className="text-[11px] text-center text-teal-200 font-medium">
@@ -2046,7 +1988,7 @@ export default function DemoDeck() {
                   Detailed Plan Comparison
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600">
-                  Compare all features side-by-side to choose the right plan for your property:
+                  Compare Lite Plan and Pro Plan side-by-side:
                 </p>
               </div>
 
@@ -2054,94 +1996,87 @@ export default function DemoDeck() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-700">
-                      <th className="py-3 px-4 font-bold text-slate-900 w-2/5">Feature / Capability</th>
-                      <th className="py-3 px-3 font-bold text-center w-1/5">Free (₹0)</th>
-                      <th className="py-3 px-3 font-bold text-center w-1/5 bg-teal-50/70 text-[#008080]">Lite (₹29/bed)</th>
-                      <th className="py-3 px-3 font-bold text-center w-1/5 bg-[#00595c] text-white">Pro (₹49/bed)</th>
+                      <th className="py-3.5 px-4 font-bold text-slate-900 w-1/2">Feature / Capability</th>
+                      <th className="py-3.5 px-4 font-bold text-center w-1/4 bg-teal-50/70 text-[#008080]">Lite Plan (₹29/bed)</th>
+                      <th className="py-3.5 px-4 font-bold text-center w-1/4 bg-[#00595c] text-white">Pro Plan (₹49/bed)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     <tr className="hover:bg-slate-50/50">
+                      <td className="py-3 px-4 font-semibold text-slate-800">45-Day Free Trial</td>
+                      <td className="py-3 px-4 text-center font-bold text-emerald-600 bg-teal-50/30">✅ Included on Signup</td>
+                      <td className="py-3 px-4 text-center font-bold text-slate-500">Paid Direct Activation</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Properties & Beds Limit</td>
-                      <td className="py-3 px-3 text-center text-slate-600">1 Property / 10 Tenants Max</td>
-                      <td className="py-3 px-3 text-center font-bold text-[#008080] bg-teal-50/30">Unlimited</td>
-                      <td className="py-3 px-3 text-center font-bold text-[#00595c]">Unlimited</td>
+                      <td className="py-3 px-4 text-center font-bold text-[#008080] bg-teal-50/30">Unlimited</td>
+                      <td className="py-3 px-4 text-center font-bold text-[#00595c]">Unlimited</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Rent Payment Collection Mode</td>
-                      <td className="py-3 px-3 text-center text-slate-600">UPI Intent (Manual Owner Verify)</td>
-                      <td className="py-3 px-3 text-center text-slate-700 bg-teal-50/30">UPI Intent (Manual Owner Verify)</td>
-                      <td className="py-3 px-3 text-center font-bold text-emerald-700 bg-emerald-50/50">
+                      <td className="py-3 px-4 text-center text-slate-700 bg-teal-50/30">
+                        Direct UPI Intent (0% Fee, Owner Manual Verify)
+                      </td>
+                      <td className="py-3 px-4 text-center font-bold text-emerald-700 bg-emerald-50/50">
                         ⚡ Automatic Gateway (T+2 Days Bank Settlement)
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-semibold text-slate-800">PG Ease Tenant Mobile App</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Included</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Included</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">Manual Payment Verification (Approve/Reject)</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Fully Automated</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-semibold text-slate-800">PG Listing & Tenant Search Leads</td>
-                      <td className="py-3 px-3 text-center text-slate-400">❌</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Direct App Leads</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Direct App & Web Leads</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">Personal Dedicated Account Manager</td>
+                      <td className="py-3 px-4 text-center text-emerald-700 font-bold bg-teal-50/30">✅ Rahul Sharma</td>
+                      <td className="py-3 px-4 text-center text-emerald-700 font-bold bg-emerald-50/40">✅ Rahul Sharma</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Dedicated PG Website (Domain)</td>
-                      <td className="py-3 px-3 text-center text-slate-400">❌</td>
-                      <td className="py-3 px-3 text-center text-slate-400 bg-teal-50/30">❌</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-amber-50/40">
+                      <td className="py-3 px-4 text-center text-slate-400 bg-teal-50/30">❌</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-amber-50/40">
                         ✅ Live Day 1 ({pgSlug}.pgease.in)
                       </td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
+                      <td className="py-3 px-4 font-semibold text-slate-800">PG Ease Tenant Mobile App</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Included</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
+                      <td className="py-3 px-4 font-semibold text-slate-800">PG Listing & Tenant Search Leads</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Direct App Leads</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Direct App & Web Leads</td>
+                    </tr>
+                    <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Staff Accounts (Wardens, Cooks)</td>
-                      <td className="py-3 px-3 text-center text-slate-400">❌</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Unlimited Roles</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Unlimited Roles</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Unlimited Roles</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Unlimited Roles</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Digital KYC (Aadhaar/PAN verification)</td>
-                      <td className="py-3 px-3 text-center text-slate-500">Paid Add-on</td>
-                      <td className="py-3 px-3 text-center text-slate-500 bg-teal-50/30">Paid Add-on</td>
-                      <td className="py-3 px-3 text-center text-slate-500 font-medium">Paid Add-on</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ DigiLocker Integrated</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ DigiLocker Integrated</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Legally Valid Digital Rent Agreements</td>
-                      <td className="py-3 px-3 text-center text-slate-500">Paid Add-on</td>
-                      <td className="py-3 px-3 text-center text-slate-500 bg-teal-50/30">Paid Add-on</td>
-                      <td className="py-3 px-3 text-center text-slate-500 font-medium">Paid Add-on</td>
+                      <td className="py-3 px-4 text-center text-slate-500 bg-teal-50/30">Paid Add-on</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Digital eSign Included</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">WhatsApp Rent Reminders & Receipts</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Automated Instant Receipts</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Electricity Sub-meter Splitter</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-semibold text-slate-800">Weekly Mess Menu Management</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Included</td>
                     </tr>
                     <tr className="hover:bg-slate-50/50">
                       <td className="py-3 px-4 font-semibold text-slate-800">Tenant Complaint Tracking & Resolution</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Included</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
-                      <td className="py-3 px-3 text-center text-emerald-600 font-bold">✅ Included</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 font-semibold text-slate-800">Account Management & Support</td>
-                      <td className="py-3 px-3 text-center text-slate-500">Email / Helpdesk</td>
-                      <td className="py-3 px-3 text-center text-emerald-700 font-bold bg-teal-50/30">Personal Account Manager</td>
-                      <td className="py-3 px-3 text-center text-emerald-700 font-bold bg-emerald-50/40">Personal Account Manager</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold bg-teal-50/30">✅ Included</td>
+                      <td className="py-3 px-4 text-center text-emerald-600 font-bold">✅ Included</td>
                     </tr>
                   </tbody>
                 </table>
