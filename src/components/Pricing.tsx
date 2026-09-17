@@ -1,4 +1,4 @@
-import { Check, ArrowRight, Sparkles, Clock } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 
 const plans = [
   {
