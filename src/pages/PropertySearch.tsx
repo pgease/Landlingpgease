@@ -8,6 +8,9 @@ import {
   Check,
   Filter,
   X,
+  MapPin,
+  Navigation,
+  Loader2,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -15,6 +18,8 @@ import InquiryModal from '../components/InquiryModal';
 import { mockProperties } from '../data/mockProperties';
 import { Property, RoomSharingType, ResidentType } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
 
 export default function PropertySearch() {
   const { isInWishlist, toggleWishlist } = useWishlist();
@@ -40,11 +45,159 @@ export default function PropertySearch() {
   const [selectedDeposits, setSelectedDeposits] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Geolocation & API States
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isNearMeActive, setIsNearMeActive] = useState(false);
+  const [apiProperties, setApiProperties] = useState<Property[]>([]);
+  const [isLoadingApi, setIsLoadingApi] = useState(false);
+
   // UI states
   const [activeImageIndex, setActiveImageIndex] = useState<{ [key: string]: number }>({});
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [inquiryProperty, setInquiryProperty] = useState<Property | null>(null);
   const [visibleCount, setVisibleCount] = useState(8);
+
+  // Geolocation Near Me handler
+  const handleNearMeClick = () => {
+    if (isNearMeActive) {
+      setIsNearMeActive(false);
+      setUserLocation(null);
+      return;
+    }
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+          setIsNearMeActive(true);
+          setSelectedCity('All');
+        },
+        (err) => {
+          console.warn('Geolocation error or denied', err);
+          alert('Could not access current location. Please allow location access in your browser.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  };
+
+  // Fetch from /properties/public/search backend API
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPublicPgs() {
+      setIsLoadingApi(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedCity && selectedCity !== 'All') {
+          params.append('location', selectedCity);
+        }
+        if (searchQuery.trim()) {
+          params.append('name', searchQuery.trim());
+        }
+        if (maxBudget) {
+          params.append('maxRent', String(maxBudget));
+        }
+        if (selectedGender && selectedGender !== 'Any') {
+          const g = selectedGender.toLowerCase();
+          params.append('gender', g === 'male' ? 'boys' : g === 'female' ? 'girls' : 'co-ed');
+        }
+        if (userLocation) {
+          params.append('latitude', String(userLocation.latitude));
+          params.append('longitude', String(userLocation.longitude));
+        }
+        params.append('limit', '50');
+
+        const res = await fetch(`${API_BASE}/properties/public/search?${params.toString()}`);
+        if (!res.ok) throw new Error(`Search error: ${res.status}`);
+        const json = await res.json();
+        const items = json?.data?.items || json?.items || [];
+
+        if (isMounted && Array.isArray(items) && items.length > 0) {
+          const mapped: Property[] = items.map((item: any) => {
+            const minRent = Number(
+              item.startingRent ||
+                item.pricing?.fourSharing ||
+                item.pricing?.triple ||
+                item.pricing?.double ||
+                item.pricing?.single ||
+                7000
+            );
+            return {
+              id: item.id,
+              slug: item.slug || item.id,
+              name: item.name,
+              verified: Boolean(item.isVerified ?? true),
+              address: item.address || `${item.city || 'Bengaluru'}, ${item.state || 'Karnataka'}`,
+              city: item.city || 'Delhi NCR',
+              area: item.area || item.city || 'Central',
+              startingPrice: minRent,
+              displayPrice: `Starts from ₹${minRent.toLocaleString('en-IN')}`,
+              images:
+                Array.isArray(item.photos) && item.photos.length > 0
+                  ? item.photos
+                  : [
+                      item.coverPhotoUrl ||
+                        'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1000&q=80',
+                    ],
+              sharingTypes: (['Single', 'Double', 'Triple', 'Triple+'] as RoomSharingType[]),
+              gender: item.gender === 'boys' ? 'Male' : item.gender === 'girls' ? 'Female' : 'Any',
+              genderLabel: item.gender === 'boys' ? 'Boys' : item.gender === 'girls' ? 'Girls' : 'Co-ed / All',
+              residentType: 'All',
+              residentTypeLabel: 'Students & Working Professionals',
+              securityDepositPeriod: '1 Month',
+              about: item.description || `${item.name} is a verified PG stay with hygienic meals, high speed internet and 24x7 security.`,
+              rentingTerms: {
+                rent: `₹${minRent.toLocaleString('en-IN')} / month`,
+                securityDeposit: `${item.securityDepositMonths || 1} Month Rent`,
+                lockinPeriod: '1 Month',
+                noticePeriod: `${item.noticePeriodDays || 30} Days`,
+              },
+              amenities: Array.isArray(item.amenities)
+                ? item.amenities.map((a: string, i: number) => ({ id: `am-${i}`, name: a, category: 'Common' }))
+                : [
+                    { id: '1', name: 'High-speed WiFi', category: 'Common' },
+                    { id: '2', name: 'Power Backup', category: 'Common' },
+                    { id: '3', name: '3 Times Food', category: 'Food' },
+                    { id: '4', name: 'Daily Cleaning', category: 'Services' },
+                  ],
+              rentPackages: [],
+              rules: Array.isArray(item.houseRules) ? item.houseRules : ['Gate closes at 11:00 PM', 'Keep common areas clean'],
+              locationDetails: {
+                latitude: Number(item.latitude || 12.9279),
+                longitude: Number(item.longitude || 77.6271),
+                googleMapUrl: item.googleMapUrl,
+                landmark: item.landmark,
+              },
+              nearbyPlaces: [],
+              owner: {
+                name: item.ownerName || 'PG Ease Verified Host',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+                bio: 'Experienced PG manager with verified listings.',
+              },
+              availableRooms: [],
+              faqs: [],
+            };
+          });
+          setApiProperties(mapped);
+        } else if (isMounted) {
+          setApiProperties([]);
+        }
+      } catch (err) {
+        console.warn('Backend search API unreachable, falling back to catalog:', err);
+        if (isMounted) setApiProperties([]);
+      } finally {
+        if (isMounted) setIsLoadingApi(false);
+      }
+    }
+
+    fetchPublicPgs();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCity, searchQuery, maxBudget, selectedGender, userLocation]);
 
   // Image slider navigation
   const nextImage = (propertyId: string, totalImages: number, e: React.MouseEvent) => {
@@ -75,11 +228,18 @@ export default function PropertySearch() {
     setMaxBudget(50000);
     setSelectedDeposits([]);
     setSearchQuery('');
+    setUserLocation(null);
+    setIsNearMeActive(false);
   };
 
-  // Filtered properties
+  // Filtered properties combining API results and mock dataset
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter((property) => {
+    const combined = [
+      ...apiProperties,
+      ...mockProperties.filter((mp) => !apiProperties.some((ap) => ap.id === mp.id)),
+    ];
+
+    return combined.filter((property) => {
       // City filter
       if (selectedCity && selectedCity !== 'All') {
         const queryCity = selectedCity.toLowerCase();
@@ -137,7 +297,7 @@ export default function PropertySearch() {
 
       return true;
     });
-  }, [selectedCity, selectedSharing, selectedGender, selectedResidents, maxBudget, selectedDeposits, searchQuery]);
+  }, [apiProperties, selectedCity, selectedSharing, selectedGender, selectedResidents, maxBudget, selectedDeposits, searchQuery]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
@@ -154,8 +314,18 @@ export default function PropertySearch() {
               </Link>{' '}
               / <span className="text-slate-800 font-medium">Find Properties</span>
             </nav>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
-              {filteredProperties.length} verified stays in {selectedCity === 'All' ? 'Delhi NCR' : selectedCity === 'Gurgaon' ? 'Gurugram' : selectedCity}
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <span>
+                {filteredProperties.length} verified stays in{' '}
+                {isNearMeActive
+                  ? 'Nearby Area'
+                  : selectedCity === 'All'
+                  ? 'Delhi NCR'
+                  : selectedCity === 'Gurgaon'
+                  ? 'Gurugram'
+                  : selectedCity}
+              </span>
+              {isLoadingApi && <Loader2 className="w-4 h-4 animate-spin text-brand-600" />}
             </h1>
           </div>
 
@@ -172,6 +342,20 @@ export default function PropertySearch() {
 
         {/* City Quick Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+          {/* Geolocation Near Me Pill */}
+          <button
+            type="button"
+            onClick={handleNearMeClick}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 shrink-0 flex items-center gap-1.5 shadow-2xs ${
+              isNearMeActive
+                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400/50'
+                : 'bg-white border border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+            }`}
+          >
+            <Navigation className={`w-3.5 h-3.5 ${isNearMeActive ? 'text-white' : 'text-emerald-600'}`} />
+            <span>{isNearMeActive ? '📍 Near Me (Active)' : '🎯 Near Me'}</span>
+          </button>
+
           {[
             { id: 'All', label: '🏢 All Delhi NCR' },
             { id: 'Noida', label: '📍 Noida' },
@@ -179,15 +363,18 @@ export default function PropertySearch() {
             { id: 'Delhi', label: '📍 Delhi' },
           ].map((cityItem) => {
             const isSelected =
-              cityItem.id === 'All'
+              !isNearMeActive &&
+              (cityItem.id === 'All'
                 ? selectedCity === 'All'
-                : selectedCity.toLowerCase() === cityItem.id.toLowerCase();
+                : selectedCity.toLowerCase() === cityItem.id.toLowerCase());
 
             return (
               <button
                 key={cityItem.id}
                 type="button"
                 onClick={() => {
+                  setIsNearMeActive(false);
+                  setUserLocation(null);
                   setSelectedCity(cityItem.id);
                   if (cityItem.id === 'All') {
                     setSearchParams({});
