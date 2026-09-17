@@ -34,6 +34,16 @@ declare global {
   }
 }
 
+function cleanIdentifier(phone?: string | null, email?: string | null): string {
+  if (phone) {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length >= 10) {
+      return digits.slice(-10);
+    }
+  }
+  return email?.trim() || '';
+}
+
 interface KycModeOption {
   id: string;
   name: string;
@@ -196,7 +206,8 @@ export default function TenantOnboarding() {
       const json = await res.json();
       setData(json);
       if (json.steps?.kyc?.mode) {
-        setSelectedKycMode(json.steps.kyc.mode);
+        const m = json.steps.kyc.mode === 'id_card' ? 'pan' : json.steps.kyc.mode;
+        setSelectedKycMode(m);
       }
       if (json.tenant?.name && !manualPanName) {
         setManualPanName(json.tenant.name);
@@ -224,7 +235,7 @@ export default function TenantOnboarding() {
         body: JSON.stringify({ mode }),
       });
       const json = await res.json();
-      if (res.ok && json.directLink) {
+      if (res.ok && (json.directLink || json.kycId || json.digioKycId)) {
         setData((prev) => {
           if (!prev) return prev;
           return {
@@ -258,6 +269,144 @@ export default function TenantOnboarding() {
     }
   };
 
+  
+  const startAadhaarKyc = async () => {
+    if (!id) return;
+    try {
+      setKycLoading(true);
+      let kycId = data?.steps.kyc.digioKycId;
+      let tokenId = data?.steps.kyc.tokenId || data?.steps.kyc.accessTokenId;
+      let directLink = data?.steps.kyc.directLink;
+
+      // Ensure fresh Digio session with DigiLocker Aadhaar (where user inputs 12-digit Aadhaar)
+      if (!kycId || data?.steps.kyc.mode !== "digilocker" || !tokenId) {
+        const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/initiate-kyc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "digilocker" }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          kycId = json.digioKycId || json.kycId;
+          tokenId = json.tokenId || json.accessTokenId;
+          directLink = json.directLink;
+          setData((prev) => prev ? ({
+            ...prev,
+            steps: {
+              ...prev.steps,
+              kyc: {
+                ...prev.steps.kyc,
+                digioKycId: kycId,
+                tokenId: tokenId,
+                accessTokenId: tokenId,
+                directLink: directLink,
+                mode: "digilocker",
+              }
+            }
+          }) : prev);
+        }
+      }
+
+      const identifier = cleanIdentifier(data?.tenant?.phone, data?.tenant?.email);
+
+      if (window.Digio && kycId) {
+        const options = {
+          environment: "production",
+          callback: (response: any) => {
+            setKycLoading(false);
+            if (response?.error_code) {
+              if (response?.message && !response.message.toLowerCase().includes("cancel") && response?.error_code !== "cancel") {
+                alert(`Aadhaar KYC: ${response.message || "Please try again"}`);
+              }
+            } else {
+              fetchOnboarding();
+            }
+          },
+          logo: "https://www.pgease.com/assets/logo.png",
+          theme: { primaryColor: "#008080", secondaryColor: "#0f172a" },
+          is_iframe: true,
+        };
+        const digio = new window.Digio(options);
+        digio.init();
+        if (tokenId) {
+          digio.submit(kycId, identifier, tokenId);
+        } else {
+          digio.submit(kycId, identifier);
+        }
+      } else if (directLink) {
+        window.open(directLink, "_blank");
+      }
+    } catch (err: any) {
+      console.error("Error starting Aadhaar KYC:", err);
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
+  const startDigilockerKyc = async () => {
+    if (!id) return;
+    try {
+      setKycLoading(true);
+      let kycId = data?.steps.kyc.digioKycId;
+      let directLink = data?.steps.kyc.directLink;
+
+      if (!kycId || data?.steps.kyc.mode !== 'digilocker') {
+        const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/initiate-kyc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'digilocker' }),
+        });
+        const json = await res.json();
+        if (res.ok) {
+          kycId = json.digioKycId || json.kycId;
+          directLink = json.directLink;
+          setData((prev) => prev ? ({
+            ...prev,
+            steps: {
+              ...prev.steps,
+              kyc: {
+                ...prev.steps.kyc,
+                digioKycId: kycId,
+                directLink: directLink,
+                mode: 'digilocker',
+              }
+            }
+          }) : prev);
+        }
+      }
+
+      const identifier = cleanIdentifier(data?.tenant?.phone, data?.tenant?.email);
+
+      if (window.Digio && kycId) {
+        const options = {
+          environment: 'production',
+          callback: (response: any) => {
+            setKycLoading(false);
+            if (response?.error_code) {
+              if (response?.message && !response.message.toLowerCase().includes('cancel') && response?.error_code !== 'cancel') {
+                alert(`DigiLocker KYC: ${response.message || 'Please try again'}`);
+              }
+            } else {
+              fetchOnboarding();
+            }
+          },
+          logo: 'https://www.pgease.com/assets/logo.png',
+          theme: { primaryColor: '#008080', secondaryColor: '#0f172a' },
+          is_iframe: true,
+        };
+        const digio = new window.Digio(options);
+        digio.init();
+        digio.submit(kycId, identifier);
+      } else if (directLink) {
+        window.open(directLink, '_blank');
+      }
+    } catch (err: any) {
+      console.error('Error starting DigiLocker KYC:', err);
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   // ─── Digio SDK: Inline KYC ───────────────────────────────────────────────
   const handleDigioKyc = useCallback(() => {
     if (!data?.steps.kyc.digioKycId) {
@@ -282,7 +431,9 @@ export default function TenantOnboarding() {
         setKycLoading(false);
         if (response?.error_code) {
           console.error('Digio KYC error:', response);
-          alert(`KYC verification could not be completed: ${response.message || 'Unknown error'}`);
+          if (response?.message && !response.message.toLowerCase().includes('cancel') && response?.error_code !== 'cancel') {
+          alert(`KYC verification: ${response.message || 'Please try again'}`);
+        }
         } else {
           fetchOnboarding();
         }
@@ -298,10 +449,13 @@ export default function TenantOnboarding() {
     try {
       const digio = new window.Digio(options);
       digio.init();
-      digio.submit(
-        data.steps.kyc.digioKycId,
-        data.tenant.phone || data.tenant.email
-      );
+      const identifier = cleanIdentifier(data.tenant.phone, data.tenant.email);
+      const tokenId = data.steps.kyc.tokenId || data.steps.kyc.accessTokenId;
+      if (tokenId) {
+        digio.submit(data.steps.kyc.digioKycId, identifier, tokenId);
+      } else {
+        digio.submit(data.steps.kyc.digioKycId, identifier);
+      }
     } catch (err: any) {
       setKycLoading(false);
       console.error('Digio init error:', err);
@@ -317,7 +471,7 @@ export default function TenantOnboarding() {
 
     const linkParts = data.steps.agreement.directLink.split('/');
     const documentId = linkParts.find((p: string) => p.startsWith('DID'));
-    const identifier = data.tenant.phone || data.tenant.email;
+    const identifier = cleanIdentifier(data.tenant.phone, data.tenant.email);
 
     if (!documentId || !window.Digio) {
       window.open(data.steps.agreement.directLink, '_blank');
@@ -332,7 +486,9 @@ export default function TenantOnboarding() {
         setEsignLoading(false);
         if (response?.error_code) {
           console.error('Digio eSign error:', response);
-          alert(`eSign could not be completed: ${response.message || 'Unknown error'}`);
+          if (response?.message && !response.message.toLowerCase().includes('cancel') && response?.error_code !== 'cancel') {
+          alert(`eSign: ${response.message || 'Please try again'}`);
+        }
         } else {
           fetchOnboarding();
         }
@@ -528,7 +684,7 @@ export default function TenantOnboarding() {
         order_id: orderData.orderId,
         prefill: {
           name: data.tenant.name,
-          contact: data.tenant.phone,
+          contact: cleanIdentifier(data.tenant.phone, ''),
           email: data.tenant.email || '',
         },
         theme: {
@@ -820,7 +976,7 @@ export default function TenantOnboarding() {
                     <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                       <button
                         type="button"
-                        onClick={handleDigioKyc}
+                        onClick={startAadhaarKyc}
                         disabled={kycLoading}
                         className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
                       >
@@ -851,7 +1007,7 @@ export default function TenantOnboarding() {
                 )}
 
                 {/* MODE 2: Upload PAN Card Image & Verification */}
-                {selectedKycMode === 'pan' && (
+                {(selectedKycMode === 'pan' || selectedKycMode === 'id_card') && (
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
