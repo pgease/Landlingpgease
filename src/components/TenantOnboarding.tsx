@@ -1,47 +1,37 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ShieldCheck,
   FileText,
+  CreditCard,
   Building,
+  CheckCircle2,
+  ExternalLink,
   Download,
+  Phone,
+  MapPin,
   Sparkles,
-  Loader2,
+  ArrowRight,
   RotateCw,
   Smartphone,
   FileBadge,
   UserCheck,
-  ExternalLink,
+  Lock,
+  Upload,
+  Camera,
+  AlertCircle,
+  Globe,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
 } from 'lucide-react';
 
-// Digio SDK v11 global type declarations
 declare global {
   interface Window {
-    Digio?: new (options: DigioOptions) => DigioInstance;
+    Digio?: any;
+    Razorpay?: any;
   }
-}
-
-interface DigioOptions {
-  environment: 'sandbox' | 'production';
-  callback: (response: DigioResponse) => void;
-  logo?: string;
-  theme?: {
-    primaryColor?: string;
-    secondaryColor?: string;
-  };
-  is_iframe?: boolean;
-}
-
-interface DigioResponse {
-  message?: string;
-  error_code?: string;
-  digio_doc_id?: string;
-  status?: string;
-}
-
-interface DigioInstance {
-  init: () => void;
-  submit: (documentId: string, identifier: string, tokenId?: string) => void;
 }
 
 interface KycModeOption {
@@ -129,22 +119,28 @@ interface OnboardingData {
 
 const DEFAULT_KYC_MODES: KycModeOption[] = [
   {
-    id: 'digilocker',
-    name: 'DigiLocker Aadhaar',
-    desc: 'Instant verification via government DigiLocker account',
-    badge: 'Fastest',
-  },
-  {
     id: 'aadhaar_offline',
     name: 'Direct Aadhaar OTP',
     desc: 'Enter 12-digit Aadhaar & verify with UIDAI OTP (No DigiLocker needed)',
     badge: 'UIDAI OTP',
   },
   {
-    id: 'id_card',
-    name: 'Government ID Upload',
-    desc: 'Upload PAN Card, Driving Licence, or Voter ID',
-    badge: 'Photo ID',
+    id: 'pan',
+    name: 'Upload PAN Card',
+    desc: 'Upload PAN image for instant OCR verification or enter PAN number',
+    badge: 'PAN Image / OCR',
+  },
+  {
+    id: 'passport',
+    name: 'Passport Verification',
+    desc: 'Upload Passport front page for instant MRZ OCR verification',
+    badge: 'Passport OCR',
+  },
+  {
+    id: 'digilocker',
+    name: 'DigiLocker Aadhaar',
+    desc: 'Instant paperless verification via government DigiLocker account',
+    badge: 'Fastest',
   },
 ];
 
@@ -154,13 +150,33 @@ export default function TenantOnboarding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+
+  // KYC Selection State
+  const [selectedKycMode, setSelectedKycMode] = useState<string>('aadhaar_offline');
+  const [switchingKycMode, setSwitchingKycMode] = useState(false);
+  const [syncingKyc, setSyncingKyc] = useState(false);
   const [kycLoading, setKycLoading] = useState(false);
   const [esignLoading, setEsignLoading] = useState(false);
 
-  // KYC Selection State
-  const [selectedKycMode, setSelectedKycMode] = useState<string>('digilocker');
-  const [switchingKycMode, setSwitchingKycMode] = useState(false);
-  const [syncingKyc, setSyncingKyc] = useState(false);
+  // PAN Upload & Manual State
+  const [panFile, setPanFile] = useState<File | null>(null);
+  const [panPreview, setPanPreview] = useState<string | null>(null);
+  const [uploadingPan, setUploadingPan] = useState(false);
+  const [panError, setPanError] = useState<string | null>(null);
+  const [panSuccess, setPanSuccess] = useState<string | null>(null);
+
+  const [showManualPan, setShowManualPan] = useState(false);
+  const [manualPanNo, setManualPanNo] = useState('');
+  const [manualPanName, setManualPanName] = useState('');
+  const [manualPanDob, setManualPanDob] = useState('');
+  const [verifyingPan, setVerifyingPan] = useState(false);
+
+  // Passport Upload State
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [passportPreview, setPassportPreview] = useState<string | null>(null);
+  const [uploadingPassport, setUploadingPassport] = useState(false);
+  const [passportError, setPassportError] = useState<string | null>(null);
+  const [passportSuccess, setPassportSuccess] = useState<string | null>(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
 
@@ -182,6 +198,9 @@ export default function TenantOnboarding() {
       if (json.steps?.kyc?.mode) {
         setSelectedKycMode(json.steps.kyc.mode);
       }
+      if (json.tenant?.name && !manualPanName) {
+        setManualPanName(json.tenant.name);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load onboarding details.');
     } finally {
@@ -189,114 +208,16 @@ export default function TenantOnboarding() {
     }
   };
 
-  // ─── Digio SDK: Inline KYC ───────────────────────────────────────────────
-  const handleDigioKyc = useCallback(() => {
-    if (!data?.steps.kyc.digioKycId) {
-      // Fallback: open directLink if no digioKycId
-      if (data?.steps.kyc.directLink) {
-        window.open(data.steps.kyc.directLink, '_blank');
-      }
-      return;
-    }
-
-    if (!window.Digio) {
-      alert('Digio SDK is still loading. Please try again in a moment.');
-      return;
-    }
-
-    setKycLoading(true);
-
-    const options: DigioOptions = {
-      environment: 'production',
-      callback: (response: DigioResponse) => {
-        setKycLoading(false);
-        if (response.error_code) {
-          console.error('Digio KYC error:', response);
-          alert(`KYC verification could not be completed: ${response.message || 'Unknown error'}`);
-        } else {
-          // KYC completed successfully — refresh onboarding data
-          fetchOnboarding();
-        }
-      },
-      logo: 'https://www.pgease.com/assets/logo.png',
-      theme: {
-        primaryColor: '#008080',
-        secondaryColor: '#0f172a',
-      },
-      is_iframe: true,
-    };
-
-    try {
-      const digio = new window.Digio(options);
-      digio.init();
-      digio.submit(
-        data.steps.kyc.digioKycId,
-        data.tenant.phone || data.tenant.email
-      );
-    } catch (err: any) {
-      setKycLoading(false);
-      console.error('Digio init error:', err);
-      // Fallback to directLink
-      if (data?.steps.kyc.directLink) {
-        window.open(data.steps.kyc.directLink, '_blank');
-      }
-    }
-  }, [data]);
-
-  // ─── Digio SDK: Inline eSign ─────────────────────────────────────────────
-  const handleDigioEsign = useCallback(() => {
-    if (!data?.steps.agreement.directLink) return;
-
-    // Extract documentId and identifier from the directLink URL
-    // Format: https://app.digio.in/#/gateway/login/DID.../TXN.../PHONE
-    const linkParts = data.steps.agreement.directLink.split('/');
-    const documentId = linkParts.find((p: string) => p.startsWith('DID'));
-    const identifier = data.tenant.phone || data.tenant.email;
-
-    if (!documentId || !window.Digio) {
-      // Fallback: open external link
-      window.open(data.steps.agreement.directLink, '_blank');
-      return;
-    }
-
-    setEsignLoading(true);
-
-    const options: DigioOptions = {
-      environment: 'production',
-      callback: (response: DigioResponse) => {
-        setEsignLoading(false);
-        if (response.error_code) {
-          console.error('Digio eSign error:', response);
-          alert(`eSign could not be completed: ${response.message || 'Unknown error'}`);
-        } else {
-          // eSign completed — refresh onboarding data
-          fetchOnboarding();
-        }
-      },
-      logo: 'https://www.pgease.com/assets/logo.png',
-      theme: {
-        primaryColor: '#008080',
-        secondaryColor: '#0f172a',
-      },
-      is_iframe: true,
-    };
-
-    try {
-      const digio = new window.Digio(options);
-      digio.init();
-      digio.submit(documentId, identifier);
-    } catch (err: any) {
-      setEsignLoading(false);
-      console.error('Digio eSign init error:', err);
-      window.open(data.steps.agreement.directLink, '_blank');
-    }
-  }, [data]);
-
   const handleSwitchKycMode = async (mode: string) => {
     if (!id || mode === selectedKycMode || data?.steps.kyc.isCompleted || switchingKycMode) return;
     try {
       setSwitchingKycMode(true);
       setSelectedKycMode(mode);
+      setPanError(null);
+      setPanSuccess(null);
+      setPassportError(null);
+      setPassportSuccess(null);
+
       const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/initiate-kyc`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -334,6 +255,224 @@ export default function TenantOnboarding() {
       await fetchOnboarding();
     } finally {
       setSyncingKyc(false);
+    }
+  };
+
+  // ─── Digio SDK: Inline KYC ───────────────────────────────────────────────
+  const handleDigioKyc = useCallback(() => {
+    if (!data?.steps.kyc.digioKycId) {
+      if (data?.steps.kyc.directLink) {
+        window.open(data.steps.kyc.directLink, '_blank');
+      }
+      return;
+    }
+
+    if (!window.Digio) {
+      if (data?.steps.kyc.directLink) {
+        window.open(data.steps.kyc.directLink, '_blank');
+      }
+      return;
+    }
+
+    setKycLoading(true);
+
+    const options = {
+      environment: 'production',
+      callback: (response: any) => {
+        setKycLoading(false);
+        if (response?.error_code) {
+          console.error('Digio KYC error:', response);
+          alert(`KYC verification could not be completed: ${response.message || 'Unknown error'}`);
+        } else {
+          fetchOnboarding();
+        }
+      },
+      logo: 'https://www.pgease.com/assets/logo.png',
+      theme: {
+        primaryColor: '#008080',
+        secondaryColor: '#0f172a',
+      },
+      is_iframe: true,
+    };
+
+    try {
+      const digio = new window.Digio(options);
+      digio.init();
+      digio.submit(
+        data.steps.kyc.digioKycId,
+        data.tenant.phone || data.tenant.email
+      );
+    } catch (err: any) {
+      setKycLoading(false);
+      console.error('Digio init error:', err);
+      if (data?.steps.kyc.directLink) {
+        window.open(data.steps.kyc.directLink, '_blank');
+      }
+    }
+  }, [data]);
+
+  // ─── Digio SDK: Inline eSign ─────────────────────────────────────────────
+  const handleDigioEsign = useCallback(() => {
+    if (!data?.steps.agreement.directLink) return;
+
+    const linkParts = data.steps.agreement.directLink.split('/');
+    const documentId = linkParts.find((p: string) => p.startsWith('DID'));
+    const identifier = data.tenant.phone || data.tenant.email;
+
+    if (!documentId || !window.Digio) {
+      window.open(data.steps.agreement.directLink, '_blank');
+      return;
+    }
+
+    setEsignLoading(true);
+
+    const options = {
+      environment: 'production',
+      callback: (response: any) => {
+        setEsignLoading(false);
+        if (response?.error_code) {
+          console.error('Digio eSign error:', response);
+          alert(`eSign could not be completed: ${response.message || 'Unknown error'}`);
+        } else {
+          fetchOnboarding();
+        }
+      },
+      logo: 'https://www.pgease.com/assets/logo.png',
+      theme: {
+        primaryColor: '#008080',
+        secondaryColor: '#0f172a',
+      },
+      is_iframe: true,
+    };
+
+    try {
+      const digio = new window.Digio(options);
+      digio.init();
+      digio.submit(documentId, identifier);
+    } catch (err: any) {
+      setEsignLoading(false);
+      console.error('Digio eSign init error:', err);
+      window.open(data.steps.agreement.directLink, '_blank');
+    }
+  }, [data]);
+
+  // PAN handlers
+  const handlePanFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPanFile(file);
+      setPanError(null);
+      setPanSuccess(null);
+      const reader = new FileReader();
+      reader.onload = () => setPanPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadPan = async () => {
+    if (!panFile || !id) return;
+    try {
+      setUploadingPan(true);
+      setPanError(null);
+      setPanSuccess(null);
+
+      const formData = new FormData();
+      formData.append('file', panFile);
+
+      const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/upload-pan-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'PAN verification failed. Please ensure the photo is clear.');
+      }
+
+      setPanSuccess(`PAN Card Verified! Number: ${json.kycInfo?.idNumber || ''}`);
+      await fetchOnboarding();
+    } catch (err: any) {
+      setPanError(err.message || 'Failed to verify PAN image.');
+    } finally {
+      setUploadingPan(false);
+    }
+  };
+
+  const handleVerifyManualPan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !manualPanNo.trim() || !manualPanName.trim() || !manualPanDob.trim()) {
+      setPanError('Please enter PAN number, Name, and Date of Birth');
+      return;
+    }
+
+    try {
+      setVerifyingPan(true);
+      setPanError(null);
+      setPanSuccess(null);
+
+      const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/verify-pan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          panNumber: manualPanNo.trim().toUpperCase(),
+          fullName: manualPanName.trim(),
+          dateOfBirth: manualPanDob.trim(),
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'PAN verification failed against Income Tax Department.');
+      }
+
+      setPanSuccess(`PAN Card Verified with Income Tax Dept! (${manualPanNo.toUpperCase()})`);
+      await fetchOnboarding();
+    } catch (err: any) {
+      setPanError(err.message || 'Failed to verify PAN details.');
+    } finally {
+      setVerifyingPan(false);
+    }
+  };
+
+  // Passport handlers
+  const handlePassportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPassportFile(file);
+      setPassportError(null);
+      setPassportSuccess(null);
+      const reader = new FileReader();
+      reader.onload = () => setPassportPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadPassport = async () => {
+    if (!passportFile || !id) return;
+    try {
+      setUploadingPassport(true);
+      setPassportError(null);
+      setPassportSuccess(null);
+
+      const formData = new FormData();
+      formData.append('file', passportFile);
+
+      const res = await fetch(`${API_BASE}/tenants/onboarding/public/${id}/upload-passport-image`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || 'Passport verification failed. Please ensure the photo is clear.');
+      }
+
+      setPassportSuccess(`Passport Verified! Number: ${json.kycInfo?.idNumber || ''}`);
+      await fetchOnboarding();
+    } catch (err: any) {
+      setPassportError(err.message || 'Failed to upload and verify Passport.');
+    } finally {
+      setUploadingPassport(false);
     }
   };
 
@@ -413,7 +552,6 @@ export default function TenantOnboarding() {
               return;
             }
 
-            // Refresh Onboarding details
             await fetchOnboarding();
           } catch (err: any) {
             alert(`Error recording payment: ${err.message}`);
@@ -489,44 +627,45 @@ export default function TenantOnboarding() {
               <span className="font-extrabold text-xl tracking-tight text-slate-900">
                 PG<span className="text-brand-600">Ease</span>
               </span>
-              <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
-                Tenant Portal
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-brand-50 text-brand-700 rounded-full border border-brand-200/50">
+                Digital Onboarding
               </span>
             </div>
           </Link>
-
-          <div className="flex items-center gap-2 bg-brand-50 border border-brand-200/80 px-3 py-1 rounded-full text-xs font-semibold text-brand-700">
-            <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
-            <span>Digital Onboarding</span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
+            <Lock className="w-3.5 h-3.5 text-brand-600" />
+            <span>256-Bit Encrypted</span>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="bg-gradient-to-b from-brand-50/60 via-white to-transparent border-b border-slate-200/60 py-8 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Hero Welcome Banner */}
+      <div className="bg-gradient-to-b from-brand-50/70 via-brand-50/20 to-transparent border-b border-slate-200/60 pt-8 pb-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-brand-200 text-brand-700 text-xs font-bold mb-3 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-                <span>Move-in Verification Process</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Welcome, {data.tenant.name}! 👋
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-800 text-xs font-bold mb-3 border border-brand-200">
+                <Sparkles className="w-3.5 h-3.5 text-brand-600" /> Paperless Move-in Portal
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Welcome to {data.property.name}, {data.tenant.name.split(' ')[0]}! 👋
               </h1>
-              <p className="text-slate-600 text-sm mt-1">
-                Complete your quick 3-step digital move-in for <span className="font-semibold text-slate-900">{data.property.name}</span>.
+              <p className="text-slate-600 text-sm mt-1.5 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                <span>{data.property.address}</span>
               </p>
             </div>
 
-            {/* Room Card Badge */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-card flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-700">
-                <Building className="w-5 h-5" />
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-card flex items-center gap-4 shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 font-extrabold text-lg">
+                {data.room.roomNumber}
               </div>
               <div>
-                <div className="text-xs text-slate-500 font-medium">Assigned Room</div>
-                <div className="font-extrabold text-slate-900 text-sm">Room {data.room.roomNumber} ({data.room.name || 'Standard'})</div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Allotted Space</p>
+                <p className="text-sm font-extrabold text-slate-900">{data.room.name || `Room ${data.room.roomNumber}`}</p>
+                <p className="text-xs font-semibold text-brand-700 mt-0.5">
+                  ₹{Number(data.room.monthlyRent).toLocaleString('en-IN')}/month
+                </p>
               </div>
             </div>
           </div>
@@ -605,26 +744,28 @@ export default function TenantOnboarding() {
                     </div>
                   </div>
                   <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/60 px-3 py-1 rounded-full border border-emerald-200">
-                    Aadhaar / DigiLocker Confirmed
+                    Identity Confirmed ✓
                   </span>
                 </div>
               </div>
             ) : (
               /* When KYC is pending: Show Mode Options Selector */
-              <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">
+              <div className="mt-5 pt-4 border-t border-slate-100 space-y-5">
                 <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Select Verification Method:
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {kycModes.map((mode) => {
                     const isSelected = selectedKycMode === mode.id;
                     const Icon =
-                      mode.id === 'digilocker'
-                        ? ShieldCheck
-                        : mode.id === 'aadhaar_offline'
+                      mode.id === 'aadhaar_offline'
                         ? Smartphone
-                        : FileBadge;
+                        : mode.id === 'pan'
+                        ? FileText
+                        : mode.id === 'passport'
+                        ? Globe
+                        : ShieldCheck;
 
                     return (
                       <button
@@ -659,45 +800,409 @@ export default function TenantOnboarding() {
                   })}
                 </div>
 
-                {/* Launch Verification & Status Refresh Bar */}
-                <div className="pt-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Digio & Government UIDAI
-                  </span>
+                {/* MODE 1: Direct Aadhaar OTP Verification */}
+                {selectedKycMode === 'aadhaar_offline' && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <Smartphone className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Direct UIDAI Aadhaar OTP
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                          You will enter your <strong>12-digit Aadhaar number</strong> directly on Digio. An official OTP will be sent to your Aadhaar-registered mobile phone from UIDAI. No DigiLocker password or account required!
+                        </p>
+                      </div>
+                    </div>
 
-                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={handleSyncKyc}
-                      disabled={syncingKyc}
-                      title="Sync verification status from Digio"
-                      className="px-3 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 transition flex items-center gap-1.5 shrink-0"
-                    >
-                      <RotateCw className={`w-3.5 h-3.5 ${syncingKyc ? 'animate-spin text-brand-600' : ''}`} />
-                      <span>{syncingKyc ? 'Checking...' : 'Refresh Status'}</span>
-                    </button>
-
-                    {data.steps.kyc.directLink && (
+                    <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                       <button
                         type="button"
                         onClick={handleDigioKyc}
                         disabled={kycLoading}
-                        className="flex-1 sm:flex-initial px-6 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {kycLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Opening {activeModeObj.name}…</span>
+                            <span>Opening Aadhaar OTP Portal…</span>
                           </>
                         ) : (
                           <>
-                            <span>Verify via {activeModeObj.name}</span>
+                            <span>Start Aadhaar OTP Verification</span>
                             <ExternalLink className="w-4 h-4" />
                           </>
                         )}
                       </button>
-                    )}
+
+                      <button
+                        type="button"
+                        onClick={handleSyncKyc}
+                        disabled={syncingKyc}
+                        className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${syncingKyc ? 'animate-spin text-brand-600' : ''}`} />
+                        <span>{syncingKyc ? 'Checking...' : 'Refresh Status'}</span>
+                      </button>
+                    </div>
                   </div>
+                )}
+
+                {/* MODE 2: Upload PAN Card Image & Verification */}
+                {selectedKycMode === 'pan' && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Upload PAN Card Photo & OCR Verification
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                          Upload a photo of your PAN card. Digio OCR will extract your details and cross-check them directly against the Income Tax Department database.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    {panError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{panError}</span>
+                      </div>
+                    )}
+                    {panSuccess && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{panSuccess}</span>
+                      </div>
+                    )}
+
+                    {/* Drag & Drop File Upload Area */}
+                    <div className="border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl p-5 bg-white text-center transition">
+                      {panPreview ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <img
+                            src={panPreview}
+                            alt="PAN Card Preview"
+                            className="max-h-40 rounded-xl border border-slate-200 object-contain shadow-sm"
+                          />
+                          <p className="text-xs font-semibold text-slate-700">{panFile?.name}</p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPanFile(null);
+                                setPanPreview(null);
+                              }}
+                              className="text-xs text-red-600 hover:underline font-semibold"
+                            >
+                              Choose another file
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              type="button"
+                              onClick={handleUploadPan}
+                              disabled={uploadingPan}
+                              className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"
+                            >
+                              {uploadingPan ? (
+                                <>
+                                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Scanning & Verifying...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Verify PAN Card Image</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-4">
+                          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold text-brand-600 hover:text-brand-700">
+                              Click to upload PAN Card photo
+                            </span>
+                            <span className="text-xs text-slate-500 block mt-0.5">JPG, PNG up to 10MB</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePanFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Manual PAN Input Form Accordion */}
+                    <div className="border border-slate-200 bg-white rounded-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowManualPan(!showManualPan)}
+                        className="w-full px-4 py-3 text-left flex items-center justify-between text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <span>Or enter PAN details manually (Instant NSDL check)</span>
+                        {showManualPan ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+
+                      {showManualPan && (
+                        <form onSubmit={handleVerifyManualPan} className="p-4 pt-0 space-y-3 border-t border-slate-100">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                                PAN NUMBER *
+                              </label>
+                              <input
+                                type="text"
+                                maxLength={10}
+                                placeholder="ABCDE1234F"
+                                value={manualPanNo}
+                                onChange={(e) => setManualPanNo(e.target.value.toUpperCase())}
+                                className="w-full px-3 py-2 text-xs font-mono font-bold border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                                FULL NAME (AS ON PAN) *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Vikas Singh"
+                                value={manualPanName}
+                                onChange={(e) => setManualPanName(e.target.value)}
+                                className="w-full px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                                DATE OF BIRTH (YYYY-MM-DD) *
+                              </label>
+                              <input
+                                type="date"
+                                value={manualPanDob}
+                                onChange={(e) => setManualPanDob(e.target.value)}
+                                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={verifyingPan}
+                            className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5"
+                          >
+                            {verifyingPan ? (
+                              <>
+                                <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>Verifying with Tax Dept...</span>
+                              </>
+                            ) : (
+                              <span>Verify PAN Details</span>
+                            )}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+
+                    {/* Digio Hosted Fallback */}
+                    <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
+                      <span>Prefer Digio hosted screen?</span>
+                      <button
+                        type="button"
+                        onClick={handleDigioKyc}
+                        disabled={kycLoading}
+                        className="font-bold text-brand-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>Open Digio PAN Verification</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 3: Upload Passport Image & Verification */}
+                {selectedKycMode === 'passport' && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Upload Passport Front Page & MRZ Verification
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                          Upload the front page of your Passport containing your photo and particulars. Digio will scan the MRZ zone and verify identity.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Alerts */}
+                    {passportError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{passportError}</span>
+                      </div>
+                    )}
+                    {passportSuccess && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{passportSuccess}</span>
+                      </div>
+                    )}
+
+                    {/* Drag & Drop File Upload Area */}
+                    <div className="border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl p-5 bg-white text-center transition">
+                      {passportPreview ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <img
+                            src={passportPreview}
+                            alt="Passport Preview"
+                            className="max-h-40 rounded-xl border border-slate-200 object-contain shadow-sm"
+                          />
+                          <p className="text-xs font-semibold text-slate-700">{passportFile?.name}</p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPassportFile(null);
+                                setPassportPreview(null);
+                              }}
+                              className="text-xs text-red-600 hover:underline font-semibold"
+                            >
+                              Choose another file
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              type="button"
+                              onClick={handleUploadPassport}
+                              disabled={uploadingPassport}
+                              className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5"
+                            >
+                              {uploadingPassport ? (
+                                <>
+                                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Scanning Passport MRZ...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Verify Passport Image</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-4">
+                          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold text-brand-600 hover:text-brand-700">
+                              Click to upload Passport photo page
+                            </span>
+                            <span className="text-xs text-slate-500 block mt-0.5">JPG, PNG up to 10MB</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePassportFileChange}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Digio Hosted Fallback */}
+                    <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
+                      <span>Prefer Digio hosted screen?</span>
+                      <button
+                        type="button"
+                        onClick={handleDigioKyc}
+                        disabled={kycLoading}
+                        className="font-bold text-brand-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>Open Digio Passport Verification</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODE 4: DigiLocker Verification */}
+                {selectedKycMode === 'digilocker' && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          DigiLocker Paperless Verification
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                          Connect your government DigiLocker account to automatically verify your Aadhaar or PAN card in seconds.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleDigioKyc}
+                        disabled={kycLoading}
+                        className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {kycLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Opening DigiLocker…</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Verify via DigiLocker</span>
+                            <ExternalLink className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSyncKyc}
+                        disabled={syncingKyc}
+                        className="w-full sm:w-auto px-4 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${syncingKyc ? 'animate-spin text-brand-600' : ''}`} />
+                        <span>{syncingKyc ? 'Checking...' : 'Refresh Status'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Status Bar */}
+                <div className="pt-1 flex items-center justify-between text-xs text-slate-500">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-brand-600" /> Powered by Digio & Government UIDAI
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSyncKyc}
+                    disabled={syncingKyc}
+                    className="hover:underline flex items-center gap-1 text-slate-600 font-semibold cursor-pointer"
+                  >
+                    <RotateCw className={`w-3 h-3 ${syncingKyc ? 'animate-spin text-brand-600' : ''}`} />
+                    <span>Sync KYC Status</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -745,6 +1250,7 @@ export default function TenantOnboarding() {
                   <ShieldCheck className="w-4 h-4 text-brand-600" /> Legally binding Aadhaar eSign via Digio SDK
                 </span>
                 <button
+                  type="button"
                   onClick={handleDigioEsign}
                   disabled={esignLoading}
                   className="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-70 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition shadow-md shadow-brand-600/20 flex items-center justify-center gap-2 cursor-pointer"
@@ -765,20 +1271,24 @@ export default function TenantOnboarding() {
             )}
 
             {data.steps.agreement.isCompleted && data.steps.agreement.signedPdfUrl && (
-              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+              <div className="mt-5 pt-4 border-t border-emerald-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Agreement Signed
+                </span>
                 <a
                   href={data.steps.agreement.signedPdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-brand-700 hover:text-brand-800 font-bold flex items-center gap-1.5 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg transition"
+                  className="px-4 py-2 border border-emerald-300 hover:bg-emerald-100 rounded-xl text-xs font-bold text-emerald-800 transition flex items-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5" /> Download Signed Agreement PDF
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Signed PDF</span>
                 </a>
               </div>
             )}
           </div>
 
-          {/* STEP 3: Move-in Dues Payment */}
+          {/* STEP 3: Move-in Rent & Deposit Payment */}
           <div className={`bg-white border rounded-3xl p-6 sm:p-7 transition-all shadow-card ${
             data.steps.payment.isCompleted 
               ? 'border-emerald-200 bg-emerald-50/20 ring-1 ring-emerald-500/20' 
@@ -795,7 +1305,7 @@ export default function TenantOnboarding() {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-lg flex items-center gap-2">
-                    Move-in Dues Payment
+                    Move-in Dues & Security Deposit
                     {data.steps.payment.isCompleted && (
                       <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
                         Paid ✓
@@ -803,7 +1313,7 @@ export default function TenantOnboarding() {
                     )}
                   </h3>
                   <p className="text-slate-600 text-sm mt-1">
-                    Pay your Security Deposit and 1st month rent securely via UPI / Cards / NetBanking.
+                    Pay rent and security deposit securely via UPI, Card, or Netbanking.
                   </p>
                 </div>
               </div>
@@ -814,70 +1324,101 @@ export default function TenantOnboarding() {
               </span>
             </div>
 
-            {/* Dues Breakdown Card */}
-            <div className="mt-5 bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-sm">
-              <div className="flex justify-between text-slate-600">
-                <span>Security Deposit</span>
-                <span className={data.steps.payment.breakdown.isSecurityPaid ? "text-emerald-700 font-bold" : "text-slate-900 font-semibold"}>
-                  ₹{data.steps.payment.breakdown.securityDeposit.toLocaleString('en-IN')} {data.steps.payment.breakdown.isSecurityPaid && "(Paid ✓)"}
-                </span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>1st Month Rent</span>
-                <span className={data.steps.payment.breakdown.isRentPaid ? "text-emerald-700 font-bold" : "text-slate-900 font-semibold"}>
-                  ₹{data.steps.payment.breakdown.monthlyRent.toLocaleString('en-IN')} {data.steps.payment.breakdown.isRentPaid && "(Paid ✓)"}
-                </span>
-              </div>
-              {data.steps.payment.breakdown.miscFees > 0 && (
-                <div className="flex justify-between text-slate-600">
-                  <span>Maintenance & Utilities</span>
-                  <span className={data.steps.payment.isCompleted ? "text-emerald-700 font-bold" : "text-slate-900 font-semibold"}>
-                    ₹{data.steps.payment.breakdown.miscFees.toLocaleString('en-IN')} {data.steps.payment.isCompleted && "(Paid ✓)"}
+            {/* Breakdown table */}
+            <div className="mt-5 pt-4 border-t border-slate-100">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600">Monthly Rent</span>
+                  <span className="font-extrabold text-slate-900">
+                    ₹{data.steps.payment.breakdown.monthlyRent.toLocaleString('en-IN')}
+                    {data.steps.payment.breakdown.isRentPaid && (
+                      <span className="ml-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Paid</span>
+                    )}
                   </span>
                 </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600">Security Deposit</span>
+                  <span className="font-extrabold text-slate-900">
+                    ₹{data.steps.payment.breakdown.securityDeposit.toLocaleString('en-IN')}
+                    {data.steps.payment.breakdown.isSecurityPaid && (
+                      <span className="ml-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Paid</span>
+                    )}
+                  </span>
+                </div>
+                {data.steps.payment.breakdown.miscFees > 0 && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600">Maintenance & Utilities</span>
+                    <span className="font-extrabold text-slate-900">
+                      ₹{data.steps.payment.breakdown.miscFees.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-900">Total Move-in Dues</span>
+                  <span className="text-base font-black text-brand-700">
+                    ₹{data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+
+              {!data.steps.payment.isCompleted && data.steps.payment.rentCollectionId && (
+                <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                    <CreditCard className="w-4 h-4 text-brand-600" /> Instant receipt generated on payment
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handlePayment}
+                    disabled={paying}
+                    className="w-full sm:w-auto px-7 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-extrabold rounded-xl transition shadow-md shadow-brand-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {paying ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Opening Gateway...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Pay ₹{data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')} Now</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
-              <div className="border-t border-slate-200 pt-2.5 flex justify-between font-extrabold text-base text-slate-900">
-                <span>{data.steps.payment.isCompleted ? "Total Paid" : "Total Move-in Dues"}</span>
-                <span className="text-brand-700 font-black">
-                  {data.steps.payment.isCompleted
-                    ? "₹19,000 (Fully Paid ✓)"
-                    : "₹" + data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')}
-                </span>
-              </div>
             </div>
+          </div>
 
-            {!data.steps.payment.isCompleted && data.steps.payment.breakdown.totalPayable > 0 && (
-              <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" /> Razorpay Instant UPI / Card Gateway
-                </span>
-                <button
-                  onClick={handlePayment}
-                  disabled={paying}
-                  className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-brand-600 to-teal-600 hover:from-brand-700 hover:to-teal-700 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {paying ? 'Connecting to Gateway...' : `Pay ₹${data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')} Now 💳`}
-                </button>
+          {/* Success Banner if All Completed */}
+          {isComplete && (
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-200" />
+                  <h3 className="text-xl font-black">You are 100% Onboarded! 🎉</h3>
+                </div>
+                <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed max-w-xl">
+                  Your identity has been verified, your rental agreement is signed, and move-in dues are settled. Welcome home to <strong>{data.property.name}</strong>!
+                </p>
               </div>
-            )}
-          </div>
-        </div>
+              <Link
+                to="/"
+                className="px-6 py-3 bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-black uppercase tracking-wider rounded-xl transition shadow-md shrink-0"
+              >
+                Back to PG Ease
+              </Link>
+            </div>
+          )}
 
-        {/* Celebration Banner when Completed */}
-        {isComplete && (
-          <div className="mt-8 bg-gradient-to-br from-emerald-500 to-teal-700 rounded-3xl p-8 text-center text-white shadow-xl">
-            <div className="text-5xl mb-3">🎉</div>
-            <h2 className="text-2xl sm:text-3xl font-black">You are All Set!</h2>
-            <p className="text-emerald-100 text-sm mt-2 max-w-md mx-auto">
-              Your onboarding at <span className="font-bold text-white">{data.property.name}</span> is complete. Your room key handover and property access are approved!
-            </p>
-          </div>
-        )}
+        </div>
       </main>
 
-      {/* Footer matching Landing Page */}
-      <footer className="border-t border-slate-200 bg-white py-6 mt-12 text-center text-xs text-slate-500">
-        Powered by <span className="text-slate-800 font-bold">PG Ease Platform</span> • Smart Living Made Simple
+      {/* Footer Support */}
+      <footer className="bg-white border-t border-slate-200/80 py-6 mt-12 text-center text-xs text-slate-500">
+        <div className="max-w-4xl mx-auto px-4">
+          <p>Questions about your onboarding? Contact your property manager at <strong>{data.owner.contactNumber || data.property.contactNumber}</strong>.</p>
+          <p className="mt-1 text-slate-400">PG Ease Technologies Private Limited • Secure Digital Onboarding</p>
+        </div>
       </footer>
     </div>
   );
