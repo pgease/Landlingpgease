@@ -48,6 +48,7 @@ export interface PropertyFAQ {
 
 export interface Property {
   id: string;
+  distanceKm?: number;
   slug: string;
   name: string;
   verified: boolean;

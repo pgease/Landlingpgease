@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import {
   Heart,
@@ -26,12 +26,247 @@ import { mockProperties } from '../data/mockProperties';
 import { RoomOption } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
-  const property = mockProperties.find((p) => p.id === id) || mockProperties[0];
+  const initialMock = mockProperties.find((p) => p.id === id) || null;
+  const [property, setProperty] = useState<Property | null>(initialMock);
+  const [loading, setLoading] = useState(!initialMock);
+
+  useEffect(() => {
+    const existing = mockProperties.find((p) => p.id === id);
+    if (existing) {
+      setProperty(existing);
+      setLoading(false);
+      return;
+    }
+
+    if (!id) return;
+
+    let isMounted = true;
+    const fetchProperty = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/properties/${id}`);
+        if (!res.ok) throw new Error('Failed to load property');
+        const json = await res.json();
+        const p = json?.data || json;
+
+        if (p && isMounted) {
+          const listing = p.publicListingDetails || {};
+          const rawPhotos = (p.photos && p.photos.length > 0)
+            ? p.photos.map((item: any) => (typeof item === 'string' ? item : item.url)).filter(Boolean)
+            : [];
+          const images = rawPhotos.length > 0 ? rawPhotos : [
+            'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1200&q=80',
+            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
+          ];
+
+          const sPrice = Number(p.singleSharingPrice) || listing.pricing?.single?.withFood || 0;
+          const dPrice = Number(p.doubleSharingPrice) || listing.pricing?.double?.withFood || 0;
+          const tPrice = Number(p.tripleSharingPrice) || listing.pricing?.triple?.withFood || 0;
+          const fPrice = Number(p.fourSharingPrice) || listing.pricing?.fourSharing?.withFood || 0;
+
+          const prices = [sPrice, dPrice, tPrice, fPrice].filter((x) => x > 0);
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 8000;
+
+          const sharingTypes: RoomSharingType[] = [];
+          const availableRooms: RoomOption[] = [];
+
+          if (sPrice > 0 || listing.pricing?.single) {
+            sharingTypes.push('Single');
+            const rent = listing.pricing?.single?.withFood || sPrice || 14000;
+            availableRooms.push({
+              type: 'Single',
+              label: 'Single Occupancy Room',
+              monthlyRent: rent,
+              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              amenities: ['Attached Washroom', 'Inverter AC', 'Study Table', '3 Homestyle Meals'],
+              currentOccupants: 0,
+              maxCapacity: 1,
+              availableBeds: 1,
+            });
+          }
+
+          if (dPrice > 0 || listing.pricing?.double) {
+            sharingTypes.push('Double');
+            const rent = listing.pricing?.double?.withFood || dPrice || 9000;
+            availableRooms.push({
+              type: 'Double',
+              label: 'Double Sharing Room',
+              monthlyRent: rent,
+              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              amenities: ['Attached Washroom', 'AC / Fan', 'Wardrobe', '3 Homestyle Meals'],
+              currentOccupants: 1,
+              maxCapacity: 2,
+              availableBeds: 1,
+            });
+          }
+
+          if (tPrice > 0 || listing.pricing?.triple) {
+            sharingTypes.push('Triple');
+            const rent = listing.pricing?.triple?.withFood || tPrice || 7500;
+            availableRooms.push({
+              type: 'Triple',
+              label: 'Triple Sharing Room',
+              monthlyRent: rent,
+              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              amenities: ['Shared Washroom', 'Cupboard', 'WiFi', '3 Homestyle Meals'],
+              currentOccupants: 2,
+              maxCapacity: 3,
+              availableBeds: 1,
+            });
+          }
+
+          if (fPrice > 0 || listing.pricing?.fourSharing) {
+            sharingTypes.push('Triple+');
+            const rent = listing.pricing?.fourSharing?.withFood || fPrice || 6000;
+            availableRooms.push({
+              type: 'Triple+',
+              label: 'Four Sharing Bed',
+              monthlyRent: rent,
+              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              amenities: ['Shared Washroom', 'Locker', 'WiFi', 'Meals'],
+              currentOccupants: 3,
+              maxCapacity: 4,
+              availableBeds: 1,
+            });
+          }
+
+          if (availableRooms.length === 0) {
+            availableRooms.push({
+              type: 'Single',
+              label: 'Standard PG Room',
+              monthlyRent: minPrice,
+              securityDeposit: minPrice * 2,
+              amenities: ['WiFi', 'Housekeeping', 'Security'],
+              currentOccupants: 0,
+              maxCapacity: 1,
+              availableBeds: 1,
+            });
+            sharingTypes.push('Single');
+          }
+
+          const rawAmenities = p.facilities || listing.amenities || [];
+          const formattedAmenities: Amenity[] = (
+            rawAmenities.length > 0 ? rawAmenities : ['WiFi', 'Power Backup', 'RO Water', 'Housekeeping']
+          ).map((name: string, i: number) => ({
+            id: `amenity-${i}`,
+            name,
+            category: 'Common',
+          }));
+
+          const rawRules = listing.houseRules || listing.restrictions || [];
+          const rules = rawRules.length > 0 ? rawRules : [
+            'No smoking inside rooms',
+            'Gate closes at 11:00 PM',
+            'Visitors allowed in common lobby only',
+            'Keep common spaces clean',
+          ];
+
+          const transformed: Property = {
+            id: p.id,
+            slug: p.propertyCode || p.id,
+            name: p.name,
+            verified: true,
+            address: p.address || 'Central Location',
+            city: p.cityName || 'Delhi NCR',
+            area: p.address?.split(',')[1]?.trim() || 'Central',
+            startingPrice: minPrice,
+            displayPrice: `Starts from ₹${minPrice.toLocaleString('en-IN')}`,
+            images,
+            sharingTypes: sharingTypes.length > 0 ? sharingTypes : ['Single', 'Double'],
+            gender: (p.propertyType && p.propertyType.toLowerCase().includes('girl'))
+              ? 'Female'
+              : (p.propertyType && p.propertyType.toLowerCase().includes('boy'))
+              ? 'Male'
+              : 'Any',
+            genderLabel: p.propertyType || 'Co-ed PG',
+            residentType: 'All',
+            residentTypeLabel: 'Students & Working Professionals',
+            securityDepositPeriod:
+              listing.securityDepositMonths === 1
+                ? '1 Month'
+                : listing.securityDepositMonths === 3
+                ? '3 Month'
+                : '2 Month',
+            about:
+              listing.description ||
+              p.description ||
+              `Welcome to ${p.name}. Situated at ${p.address || 'a prime location'}, offering modern amenities, fresh hygienic meals, high-speed WiFi, and 24/7 security.`,
+            rentingTerms: {
+              rent: `₹${minPrice.toLocaleString('en-IN')} / month`,
+              securityDeposit: `${listing.securityDepositMonths || 2} Months Deposit`,
+              lockinPeriod: '1 Month',
+              noticePeriod: `${listing.noticePeriodDays || 30} Days Notice`,
+            },
+            amenities: formattedAmenities,
+            rentPackages: [
+              { name: 'Room Rent', price: `₹${minPrice.toLocaleString('en-IN')}`, included: true },
+              { name: '3 Meals Daily', price: 'Included', included: true },
+              { name: 'High-speed WiFi', price: 'Included', included: true },
+              { name: 'Electricity Bill', price: 'As per meter reading', included: false },
+            ],
+            rules,
+            locationDetails: {
+              latitude: Number(p.latitude) || 28.6139,
+              longitude: Number(p.longitude) || 77.209,
+              landmark: p.address,
+            },
+            nearbyPlaces: (p.nearbyPlaces || ['Metro Station', 'Market', 'College / IT Park']).map(
+              (name: string, i: number) => ({
+                name,
+                distance: `${(i + 1) * 300}m`,
+                category: i % 2 === 0 ? 'Transit' : 'Utilities',
+              })
+            ),
+            owner: {
+              name: p.adminName || 'Verified Property Host',
+              phone: p.mobileContactNumber || listing.contactNumber || '+91 98765 43210',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+              bio: `Host at ${p.name} - Dedicated to providing a comfortable, safe, and welcoming living environment for residents.`,
+              experience: '4+ Years Hosting Experience',
+            },
+            availableRooms,
+            faqs: [
+              {
+                question: 'What is the notice period before vacating?',
+                answer: `The standard notice period for this property is ${listing.noticePeriodDays || 30} days.`,
+              },
+              {
+                question: 'How is the security deposit refunded?',
+                answer: `The ${listing.securityDepositMonths || 2}-month security deposit is fully refunded within 7 days of move-out after room inspection.`,
+              },
+              {
+                question: 'Are meals included in the monthly rent?',
+                answer: 'Yes, 3 hygienic homestyle meals (Breakfast, Lunch, Dinner) are provided with daily varying menus.',
+              },
+            ],
+          };
+
+          setProperty(transformed);
+        }
+      } catch {
+        if (isMounted && !property) {
+          setProperty(mockProperties[0]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchProperty();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const isWishlisted = isInWishlist(property.id);
+  const isWishlisted = property ? isInWishlist(property.id) : false;
 
   // States
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
@@ -46,6 +281,21 @@ export default function PropertyDetails() {
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleType, setScheduleType] = useState<TourType>('visit');
   const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
+        <Navbar onBookDemo={() => {}} />
+        <div className="flex-1 flex items-center justify-center pt-24">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-slate-600">Loading verified property details...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!property) {
     return <Navigate to="/find-properties" replace />;
