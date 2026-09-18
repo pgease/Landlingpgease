@@ -68,7 +68,7 @@ import { WishlistProvider } from './context/WishlistContext';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <WishlistProvider>
         <ScrollToTop />
         <Routes>

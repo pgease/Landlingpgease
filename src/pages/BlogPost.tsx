@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import {
   Calendar,
   Clock,
@@ -9,30 +9,137 @@ import {
   ChevronRight,
   AlertTriangle,
   Building,
+  Eye,
+  Loader2,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { mockBlogs } from '../data/mockBlogs';
+import { blogApi, type PublicBlogItem } from '../services/blogApi';
+import { BlogPost as BlogPostType } from '../types/blog';
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const [copied, setCopied] = useState(false);
+  const [blog, setBlog] = useState<BlogPostType | null>(null);
+  const [recentBlogs, setRecentBlogs] = useState<PublicBlogItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const blog = mockBlogs.find((b) => b.slug === slug);
+  useEffect(() => {
+    let mounted = true;
+    async function loadPost() {
+      if (!slug) return;
+      setIsLoading(true);
+      try {
+        const res = await blogApi.getBlogBySlug(slug);
+        if (mounted && res?.success && res.data) {
+          const item = res.data;
+          setBlog({
+            id: item.id,
+            slug: item.slug,
+            title: item.title,
+            category: item.category || 'Tenant Guide',
+            excerpt: item.excerpt || '',
+            coverImage: item.coverImageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
+            author: {
+              name: item.authorName || 'PG Ease Team',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+              role: 'Compliance Researcher',
+            },
+            publishDate: item.publishedAt
+              ? new Date(item.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              : 'Recently published',
+            readTime: `${item.readTimeMinutes || 3} min read`,
+            content: item.contentHtml || '',
+            contentHtml: item.contentHtml,
+            tags: item.tags || [],
+            viewsCount: item.viewsCount || 0,
+            readTimeMinutes: item.readTimeMinutes || 3,
+          });
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend blog post fetch failed, checking local mocks', err);
+      }
 
-  if (!blog) {
-    return <Navigate to="/blog" replace />;
-  }
+      // Fallback to local mockBlogs
+      const fallback = mockBlogs.find((b) => b.slug === slug);
+      if (mounted) {
+        setBlog(fallback || null);
+        setIsLoading(false);
+      }
+    }
 
-  const relatedBlogs = mockBlogs
-    .filter((b) => b.id !== blog.id)
-    .slice(0, 3);
+    async function loadRecent() {
+      try {
+        const res = await blogApi.getRecentBlogs(4);
+        if (mounted && res?.success && Array.isArray(res.data)) {
+          setRecentBlogs(res.data.filter((b) => b.slug !== slug).slice(0, 3));
+        }
+      } catch (err) {
+        console.warn('Recent blogs fetch failed', err);
+      }
+    }
+
+    loadPost().finally(() => {
+      if (mounted) setIsLoading(false);
+    });
+    loadRecent();
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center">
+        <Navbar onBookDemo={() => {}} />
+        <div className="flex flex-col items-center gap-3 pt-24">
+          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+          <p className="text-sm font-medium text-slate-500">Loading article...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center p-6">
+        <Navbar onBookDemo={() => {}} />
+        <div className="text-center max-w-md bg-white p-8 rounded-3xl shadow-sm border border-slate-200 mt-20">
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Article Not Found</h2>
+          <p className="text-sm text-slate-500 mb-6">The blog post you're looking for may have been moved or unpublished.</p>
+          <Link
+            to="/blog"
+            className="inline-flex items-center px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-xl transition-colors"
+          >
+            Return to Blog Directory
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const relatedList =
+    recentBlogs.length > 0
+      ? recentBlogs
+      : mockBlogs.filter((b) => b.slug !== blog.slug).slice(0, 3).map((m) => ({
+          id: m.id,
+          slug: m.slug,
+          title: m.title,
+          excerpt: m.excerpt,
+          coverImageUrl: m.coverImage,
+          category: m.category,
+          authorName: m.author.name,
+          publishedAt: m.publishDate,
+        }));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
@@ -57,7 +164,7 @@ export default function BlogPost() {
           </nav>
 
           {/* Category Pill */}
-          <span className="inline-block px-3 py-1 bg-brand-50 text-brand-700 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+          <span className="inline-block px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-teal-100">
             {blog.category}
           </span>
 
@@ -72,7 +179,7 @@ export default function BlogPost() {
               <img
                 src={blog.author.avatar}
                 alt={blog.author.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-brand-200"
+                className="w-12 h-12 rounded-full object-cover border-2 border-teal-200"
               />
               <div>
                 <p className="text-sm font-bold text-slate-900">{blog.author.name}</p>
@@ -90,6 +197,15 @@ export default function BlogPost() {
                 <Clock className="w-4 h-4 text-slate-400" />
                 {blog.readTime}
               </span>
+              {typeof blog.viewsCount === 'number' && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1.5 text-teal-600 font-semibold">
+                    <Eye className="w-4 h-4" />
+                    {blog.viewsCount.toLocaleString()} views
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -104,7 +220,7 @@ export default function BlogPost() {
             className="w-full h-full object-cover"
           />
           <div className="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-xs px-3.5 py-1.5 rounded-xl flex items-center gap-2">
-            <Building className="w-4 h-4 text-brand-300" />
+            <Building className="w-4 h-4 text-teal-300" />
             <span>Case Analysis • Ground Zero Report</span>
           </div>
         </div>
@@ -115,31 +231,40 @@ export default function BlogPost() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main Article Content */}
           <article className="lg:col-span-12 prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-li:text-slate-600">
-            {/* Excerpt callout */}
-            <div className="bg-amber-50/60 border-l-4 border-amber-500 p-5 rounded-r-2xl mb-8 not-prose">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-900 font-medium leading-relaxed m-0">
-                  {blog.excerpt}
-                </p>
+            {/* Excerpt callout if present */}
+            {blog.excerpt && (
+              <div className="bg-amber-50/60 border-l-4 border-amber-500 p-5 rounded-r-2xl mb-8 not-prose">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-900 font-medium leading-relaxed m-0">
+                    {blog.excerpt}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Markdown rendered sections */}
-            <div
-              className="space-y-6 text-slate-700 text-base leading-relaxed"
-              dangerouslySetInnerHTML={{
-                __html: blog.content
-                  .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-slate-900 mt-8 mb-4">$1</h2>')
-                  .replace(/### (.*)/g, '<h3 class="text-xl font-bold text-slate-800 mt-6 mb-3">$1</h3>')
-                  .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
-                  .replace(/\n\n/g, '<p class="my-4 text-slate-600 leading-relaxed">')
-                  .replace(/- (.*)/g, '<li class="ml-6 list-disc text-slate-600 my-1">$1</li>'),
-              }}
-            />
+            {/* Rich HTML or Formatted Markdown Rendering */}
+            {blog.contentHtml ? (
+              <div
+                className="space-y-6 text-slate-700 text-base leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: blog.contentHtml }}
+              />
+            ) : (
+              <div
+                className="space-y-6 text-slate-700 text-base leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: blog.content
+                    .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-slate-900 mt-8 mb-4">$1</h2>')
+                    .replace(/### (.*)/g, '<h3 class="text-xl font-bold text-slate-800 mt-6 mb-3">$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+                    .replace(/\n\n/g, '<p class="my-4 text-slate-600 leading-relaxed">')
+                    .replace(/- (.*)/g, '<li class="ml-6 list-disc text-slate-600 my-1">$1</li>'),
+                }}
+              />
+            )}
 
             {/* Compliance Callout Card */}
-            <div className="mt-12 not-prose bg-gradient-to-br from-brand-600 to-teal-800 text-white rounded-3xl p-8 shadow-xl">
+            <div className="mt-12 not-prose bg-gradient-to-br from-teal-600 to-teal-900 text-white rounded-3xl p-8 shadow-xl">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-7 h-7 text-teal-300" />
@@ -154,7 +279,7 @@ export default function BlogPost() {
                   <div className="flex flex-wrap items-center gap-3">
                     <Link
                       to="/list-your-property"
-                      className="px-5 py-2.5 bg-white text-brand-800 hover:bg-teal-50 font-bold text-sm rounded-xl transition-colors shadow-sm"
+                      className="px-5 py-2.5 bg-white text-teal-800 hover:bg-teal-50 font-bold text-sm rounded-xl transition-colors shadow-sm"
                     >
                       Get PG Ease Software
                     </Link>
@@ -174,7 +299,7 @@ export default function BlogPost() {
             {/* Social Share & Copy Link */}
             <div className="mt-10 pt-6 border-t border-slate-200 not-prose flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <Share2 className="w-4 h-4 text-brand-600" />
+                <Share2 className="w-4 h-4 text-teal-600" />
                 Share this article:
               </div>
 
@@ -230,21 +355,21 @@ export default function BlogPost() {
             <h2 className="text-2xl font-bold text-slate-900">Recommended Reading</h2>
             <Link
               to="/blog"
-              className="text-sm font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+              className="text-sm font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"
             >
               View all blogs <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedBlogs.map((item) => (
+            {relatedList.map((item) => (
               <article
                 key={item.id}
-                className="bg-white rounded-2xl border border-slate-200/80 hover:border-brand-300 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col"
+                className="bg-white rounded-2xl border border-slate-200/80 hover:border-teal-300 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col"
               >
                 <Link to={`/blog/${item.slug}`} className="block relative aspect-[16/10] overflow-hidden">
                   <img
-                    src={item.coverImage}
+                    src={item.coverImageUrl || (item as any).coverImage}
                     alt={item.title}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
@@ -253,12 +378,12 @@ export default function BlogPost() {
                   </span>
                 </Link>
                 <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-bold text-slate-900 text-sm hover:text-brand-600 transition-colors line-clamp-2 mb-2">
+                  <h3 className="font-bold text-slate-900 text-sm hover:text-teal-600 transition-colors line-clamp-2 mb-2">
                     <Link to={`/blog/${item.slug}`}>{item.title}</Link>
                   </h3>
                   <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span>{item.author.name}</span>
-                    <span>{item.publishDate}</span>
+                    <span>{item.authorName || (item as any).author?.name || 'PG Ease'}</span>
+                    <span>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : ''}</span>
                   </div>
                 </div>
               </article>

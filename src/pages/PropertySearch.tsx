@@ -8,7 +8,6 @@ import {
   Check,
   Filter,
   X,
-  MapPin,
   Navigation,
   Loader2,
 } from 'lucide-react';

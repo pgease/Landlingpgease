@@ -1,13 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, BookOpen, Tag } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, BookOpen, Tag, Eye, Clock, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { mockBlogs } from '../data/mockBlogs';
-import { BlogCategory } from '../types/blog';
+import { BlogPost } from '../types/blog';
+import { blogApi, type BlogCategoryCount } from '../services/blogApi';
 
-const CATEGORIES: BlogCategory[] = [
+const DEFAULT_CATEGORIES = [
   'All categories',
+  'Tenant Guide',
+  'PG Life',
   'Case Study',
   'Cost of Living',
   'Growth',
@@ -15,28 +18,107 @@ const CATEGORIES: BlogCategory[] = [
   'Market Trends',
   'PG Ownership',
   'Property Management',
-  'Property Tax',
   'Tech',
 ];
 
 export default function BlogList() {
-  const [selectedCategory, setSelectedCategory] = useState<BlogCategory>('All categories');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All categories');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 6;
 
+  const [apiBlogs, setApiBlogs] = useState<BlogPost[]>([]);
+  const [apiCategories, setApiCategories] = useState<BlogCategoryCount[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCategories() {
+      try {
+        const res = await blogApi.getCategories();
+        if (mounted && res?.success && Array.isArray(res.data)) {
+          setApiCategories(res.data);
+        }
+      } catch (err) {
+        console.warn('Could not load blog categories from API', err);
+      }
+    }
+    loadCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadBlogs() {
+      setIsLoading(true);
+      try {
+        const res = await blogApi.getBlogs({
+          search: searchQuery.trim() || undefined,
+          category: selectedCategory !== 'All categories' ? selectedCategory : undefined,
+          page: currentPage,
+          limit: postsPerPage * 2,
+        });
+        if (mounted && res?.success && Array.isArray(res.data)) {
+          const mapped: BlogPost[] = res.data.map((item) => ({
+            id: item.id,
+            slug: item.slug,
+            title: item.title,
+            category: item.category || 'Tenant Guide',
+            excerpt: item.excerpt || 'Read the complete article for actionable insights.',
+            coverImage: item.coverImageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
+            author: {
+              name: item.authorName || 'PG Ease Team',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+              role: 'Compliance & Research',
+            },
+            publishDate: item.publishedAt
+              ? new Date(item.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              : 'Recently published',
+            readTime: `${item.readTimeMinutes || 3} min read`,
+            content: item.contentHtml || '',
+            contentHtml: item.contentHtml,
+            tags: item.tags || [],
+            viewsCount: item.viewsCount || 0,
+            readTimeMinutes: item.readTimeMinutes || 3,
+          }));
+          setApiBlogs(mapped);
+        }
+      } catch (err) {
+        console.warn('Could not load blogs from backend API, using local catalog', err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+    loadBlogs();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCategory, searchQuery, currentPage]);
+
+  const categories = useMemo(() => {
+    if (apiCategories.length > 0) {
+      const serverNames = apiCategories.map((c) => c.category);
+      return ['All categories', ...Array.from(new Set([...serverNames, ...DEFAULT_CATEGORIES.slice(1)]))];
+    }
+    return DEFAULT_CATEGORIES;
+  }, [apiCategories]);
+
   const filteredBlogs = useMemo(() => {
-    return mockBlogs.filter((blog) => {
+    const combined = [...apiBlogs, ...mockBlogs.filter((mb) => !apiBlogs.some((ab) => ab.slug === mb.slug))];
+    return combined.filter((blog) => {
       const matchesCategory =
-        selectedCategory === 'All categories' || blog.category === selectedCategory;
+        selectedCategory === 'All categories' || blog.category.toLowerCase() === selectedCategory.toLowerCase();
       const matchesSearch =
         blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         blog.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
         blog.author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        blog.category.toLowerCase().includes(searchQuery.toLowerCase());
+        blog.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (blog.tags && blog.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [apiBlogs, selectedCategory, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / postsPerPage));
   const displayedBlogs = filteredBlogs.slice(
@@ -88,8 +170,12 @@ export default function BlogList() {
             </h2>
 
             <nav className="space-y-1" aria-label="Blog categories">
-              {CATEGORIES.map((cat) => {
+              {categories.map((cat: string) => {
                 const isActive = selectedCategory === cat;
+                const catCount =
+                  cat === 'All categories'
+                    ? filteredBlogs.length
+                    : apiCategories.find((c) => c.category.toLowerCase() === cat.toLowerCase())?.count;
                 return (
                   <button
                     key={cat}
@@ -111,9 +197,9 @@ export default function BlogList() {
                       />
                       {cat}
                     </span>
-                    {cat === 'All categories' && (
+                    {typeof catCount === 'number' && (
                       <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-normal">
-                        {mockBlogs.length}
+                        {catCount}
                       </span>
                     )}
                   </button>
@@ -186,7 +272,12 @@ export default function BlogList() {
             </div>
 
             {/* Blog Cards Grid */}
-            {displayedBlogs.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-white rounded-2xl p-16 text-center border border-slate-200 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 text-teal-600 animate-spin mb-3" />
+                <p className="text-sm font-medium text-slate-600">Loading articles...</p>
+              </div>
+            ) : displayedBlogs.length === 0 ? (
               <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
                 <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-slate-700">No blogs found</h3>
@@ -243,8 +334,17 @@ export default function BlogList() {
                             {blog.author.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <span>{blog.publishDate}</span>
+                        <div className="flex items-center gap-2.5 text-slate-400">
+                          {typeof blog.viewsCount === 'number' && blog.viewsCount > 0 && (
+                            <span className="flex items-center gap-1 text-teal-600 font-medium">
+                              <Eye className="w-3.5 h-3.5" />
+                              {blog.viewsCount}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {blog.readTime}
+                          </span>
                         </div>
                       </div>
                     </div>
