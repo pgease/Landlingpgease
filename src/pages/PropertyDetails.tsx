@@ -26,7 +26,7 @@ import { mockProperties } from '../data/mockProperties';
 import { RoomOption } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
 
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
