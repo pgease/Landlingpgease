@@ -809,7 +809,7 @@ export default function PropertySearch() {
         <InquiryModal
           isOpen={Boolean(inquiryProperty)}
           onClose={() => setInquiryProperty(null)}
-          propertyName={inquiryProperty.name}
+          property={inquiryProperty}
         />
       )}
     </div>
