@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { mockBlogs } from '../data/mockBlogs';
 import { blogApi, type PublicBlogItem } from '../services/blogApi';
 import { BlogPost as BlogPostType } from '../types/blog';
 
@@ -56,16 +55,15 @@ export default function BlogPost() {
             viewsCount: item.viewsCount || 0,
             readTimeMinutes: item.readTimeMinutes || 3,
           });
+          setIsLoading(false);
           return;
         }
       } catch (err) {
         console.warn('Backend blog post fetch failed, checking local mocks', err);
       }
 
-      // Fallback to local mockBlogs
-      const fallback = mockBlogs.find((b) => b.slug === slug);
       if (mounted) {
-        setBlog(fallback || null);
+        setBlog(null);
         setIsLoading(false);
       }
     }
@@ -127,19 +125,7 @@ export default function BlogPost() {
     );
   }
 
-  const relatedList =
-    recentBlogs.length > 0
-      ? recentBlogs
-      : mockBlogs.filter((b) => b.slug !== blog.slug).slice(0, 3).map((m) => ({
-          id: m.id,
-          slug: m.slug,
-          title: m.title,
-          excerpt: m.excerpt,
-          coverImageUrl: m.coverImage,
-          category: m.category,
-          authorName: m.author.name,
-          publishedAt: m.publishDate,
-        }));
+  const relatedList = recentBlogs.filter((b) => b.slug !== blog?.slug);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
@@ -350,7 +336,8 @@ export default function BlogPost() {
         </div>
 
         {/* Related Articles Section */}
-        <section className="mt-16 pt-12 border-t border-slate-200">
+        {relatedList.length > 0 && (
+          <section className="mt-16 pt-12 border-t border-slate-200">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-slate-900">Recommended Reading</h2>
             <Link
@@ -390,6 +377,7 @@ export default function BlogPost() {
             ))}
           </div>
         </section>
+        )}
       </main>
 
       <Footer />

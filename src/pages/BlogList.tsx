@@ -3,23 +3,10 @@ import { Link } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, BookOpen, Tag, Eye, Clock, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { mockBlogs } from '../data/mockBlogs';
 import { BlogPost } from '../types/blog';
 import { blogApi, type BlogCategoryCount } from '../services/blogApi';
 
-const DEFAULT_CATEGORIES = [
-  'All categories',
-  'Tenant Guide',
-  'PG Life',
-  'Case Study',
-  'Cost of Living',
-  'Growth',
-  'Legal',
-  'Market Trends',
-  'PG Ownership',
-  'Property Management',
-  'Tech',
-];
+
 
 export default function BlogList() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All categories');
@@ -99,15 +86,18 @@ export default function BlogList() {
 
   const categories = useMemo(() => {
     if (apiCategories.length > 0) {
-      const serverNames = apiCategories.map((c) => c.category);
-      return ['All categories', ...Array.from(new Set([...serverNames, ...DEFAULT_CATEGORIES.slice(1)]))];
+      const serverNames = apiCategories.map((c) => c.category).filter(Boolean);
+      return ['All categories', ...Array.from(new Set(serverNames))];
     }
-    return DEFAULT_CATEGORIES;
-  }, [apiCategories]);
+    const blogCategories = apiBlogs.map((b) => b.category).filter(Boolean);
+    if (blogCategories.length > 0) {
+      return ['All categories', ...Array.from(new Set(blogCategories))];
+    }
+    return ['All categories'];
+  }, [apiCategories, apiBlogs]);
 
   const filteredBlogs = useMemo(() => {
-    const combined = [...apiBlogs, ...mockBlogs.filter((mb) => !apiBlogs.some((ab) => ab.slug === mb.slug))];
-    return combined.filter((blog) => {
+    return apiBlogs.filter((blog) => {
       const matchesCategory =
         selectedCategory === 'All categories' || blog.category.toLowerCase() === selectedCategory.toLowerCase();
       const matchesSearch =
