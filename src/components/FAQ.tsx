@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     question: 'Is PG Ease suitable for small PG owners?',
-    answer: 'Yes. Every new PG owner receives a 45-day free trial of our Lite Plan upon signup with zero upfront cost. You get direct UPI collection with 0% transaction fee, tenant management, electricity billing, and your own Dedicated Account Manager. After the trial, you can continue on Lite for just ₹29/bed/month or upgrade to Pro for ₹49/bed/month.',
+    answer: 'Yes. Every new PG owner receives a 45-day free trial of our Pro Plan upon signup with zero upfront cost and full feature access. You get complete operations, tenant management, electricity billing, and your own Dedicated Account Manager. After the trial, you can continue on Lite for just ₹29/bed/month or maintain full automation on Pro for ₹49/bed/month.',
   },
   {
     question: 'How does PG Ease help automate PG operations?',
