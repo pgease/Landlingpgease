@@ -161,12 +161,12 @@ export default function RentCollection() {
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
         name: data.property.name,
-        description: `Rent & Dues for ${data.period.label} (Room ${data.tenant.roomNumber})`,
+        description: `Rent & Dues for ${data.period.label} (Room ${data.tenant?.roomNumber || (data as any).room?.roomNumber || ''})`,
         order_id: orderData.orderId,
         prefill: {
-          name: data.tenant.name,
-          contact: data.tenant.phone,
-          email: data.tenant.email || '',
+          name: data.tenant?.name || 'Tenant',
+          contact: data.tenant?.phone || '',
+          email: data.tenant?.email || '',
         },
         theme: {
           color: '#008080',
@@ -237,8 +237,12 @@ export default function RentCollection() {
     );
   }
 
-  const isFullyPaid = data.status === 'paid' || data.summary.balanceDue === 0;
+  const balanceDue = data.summary?.balanceDue ?? (data as any).totalPayable ?? 0;
+  const isFullyPaid = data.status === 'paid' || balanceDue === 0;
   const payableTotal = calculateSelectedTotal();
+
+  const roomDisplay = data.tenant?.roomNumber || (data as any).room?.roomNumber || '—';
+  const roomNameDisplay = data.tenant?.roomName || ((data as any).room?.roomNumber ? `Room ${(data as any).room.roomNumber}` : 'Standard');
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
@@ -281,8 +285,8 @@ export default function RentCollection() {
 
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-right w-full sm:w-auto">
               <div className="text-xs text-slate-500 font-medium">Tenant & Room</div>
-              <div className="font-extrabold text-slate-900 text-base">{data.tenant.name}</div>
-              <div className="text-xs font-semibold text-brand-700">Room {data.tenant.roomNumber} ({data.tenant.roomName || 'Standard'})</div>
+              <div className="font-extrabold text-slate-900 text-base">{data.tenant?.name || 'Tenant'}</div>
+              <div className="text-xs font-semibold text-brand-700">Room {roomDisplay} ({roomNameDisplay})</div>
             </div>
           </div>
         </div>
@@ -301,7 +305,7 @@ export default function RentCollection() {
             <div className="mt-6 max-w-sm mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-sm text-left">
               <div className="flex justify-between text-slate-600">
                 <span>Amount Paid</span>
-                <span className="font-extrabold text-slate-900 text-base">₹{data.summary.amountPaid.toLocaleString('en-IN')}</span>
+                <span className="font-extrabold text-slate-900 text-base">₹{(data.summary?.amountPaid ?? (data as any).amountPaid ?? 0).toLocaleString('en-IN')}</span>
               </div>
               {data.paymentInfo?.paidAt && (
                 <div className="flex justify-between text-slate-600">
