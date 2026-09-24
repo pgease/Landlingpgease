@@ -700,6 +700,12 @@ export default function TenantOnboarding() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                amountPaid: data.steps.payment.breakdown.totalPayable,
+                itemsPaid: {
+                  includeRent: !data.steps.payment.breakdown.isRentPaid,
+                  includeSecurityDeposit: !data.steps.payment.breakdown.isSecurityPaid,
+                  includeMiscellaneous: true,
+                },
               }),
             });
 

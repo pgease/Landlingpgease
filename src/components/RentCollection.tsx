@@ -181,6 +181,12 @@ export default function RentCollection() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                amountPaid: calculateSelectedTotal(),
+                itemsPaid: {
+                  includeRent,
+                  includeSecurityDeposit: includeSecurity,
+                  includeMiscellaneous: includeMisc,
+                },
               }),
             });
 
