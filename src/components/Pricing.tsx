@@ -34,6 +34,7 @@ export default function Pricing() {
     if (isPro) {
       return [
         'Includes everything in Lite, plus:',
+        'Private PG Group Chat (Owner + Staff + Tenants)',
         'Automated payment gateway collections',
         'Automated Settlement (T+2 direct bank transfer)',
         'Dedicated PG Website (pgname.pgease.in)',
@@ -97,7 +98,7 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Choose between Lite and Pro. Enjoy a {trialDays}-day free trial on Pro with zero commitment.
+            Choose between Lite and Pro. Enjoy a {trialDays}-day free trial on Pro from the day you create your account with zero commitment.
           </p>
         </div>
 

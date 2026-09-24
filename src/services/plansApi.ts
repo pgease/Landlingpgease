@@ -77,6 +77,7 @@ export const FALLBACK_PLANS: SubscriptionPlan[] = [
     displayOrder: 2,
     features: [
       { name: 'Includes everything in Lite, plus:' },
+      { name: 'Private PG Group Chat (Owner + Staff + Tenants)' },
       { name: 'Automated payment gateway collections' },
       { name: 'Automated Settlement (T+2 direct bank transfer)' },
       { name: 'Dedicated PG Website (pgname.pgease.in)' },

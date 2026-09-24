@@ -19,6 +19,7 @@ const features = [
   { icon: Users, title: 'Add Tenants', description: 'Excel upload, invite links, or manual entry' },
   { icon: Home, title: 'Vacancy & Room Tracking', description: 'Real-time occupancy dashboard' },
   { icon: DollarSign, title: 'Rent Tracking & UPI Collection', description: 'Automated rent collection with UPI integration' },
+  { icon: MessageSquare, title: 'Private PG Group Chat (PRO)', description: 'Private communication group for Owner, Staff & Tenants with room tags and announcements' },
   { icon: MessageSquare, title: 'WhatsApp Rent Reminders', description: 'Automatic reminders sent via WhatsApp' },
   { icon: Shield, title: 'Aadhaar Verification', description: 'Secure tenant identity verification' },
   { icon: Wrench, title: 'Complaint Management', description: 'Track and resolve tenant complaints' },

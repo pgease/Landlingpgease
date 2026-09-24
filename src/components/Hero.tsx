@@ -72,10 +72,15 @@ export default function Hero({ onBookDemo }: HeroProps) {
               </Link>
             </div>
 
-            <p className="text-xs text-slate-500 flex items-center gap-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-              <span>Free forever up to 10 beds for owners • Zero brokerage for tenants</span>
-            </p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
+              <span className="inline-flex items-center gap-1.5 font-bold text-brand-700 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-lg">
+                ✨ 45-Day Free Pro Trial from Day of Sign Up
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                <span>Private PG Group Chat • Zero setup fee • No card required</span>
+              </span>
+            </div>
           </div>
 
           {/* Right — Phone Mockup */}
