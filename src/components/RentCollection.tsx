@@ -75,7 +75,7 @@ export default function RentCollection() {
   const [includeSecurity, setIncludeSecurity] = useState(true);
   const [includeMisc, setIncludeMisc] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
 
   useEffect(() => {
     if (!id) return;

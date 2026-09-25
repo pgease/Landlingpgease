@@ -188,7 +188,7 @@ export default function TenantOnboarding() {
   const [passportError, setPassportError] = useState<string | null>(null);
   const [passportSuccess, setPassportSuccess] = useState<string | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://pg-ease-nest.vercel.app/api';
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
 
   useEffect(() => {
     if (!id) return;
