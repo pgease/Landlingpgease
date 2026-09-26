@@ -26,7 +26,7 @@ import { mockProperties } from '../data/mockProperties';
 import { Property, RoomSharingType, ResidentType } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
+import { API_BASE } from '../config/api';
 
 export default function PropertySearch() {
   const { isInWishlist, toggleWishlist } = useWishlist();

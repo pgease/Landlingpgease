@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../config/api';
 import {
   ShieldCheck,
   FileText,
@@ -87,6 +88,8 @@ interface OnboardingData {
       status: string;
       isCompleted: boolean;
       digioKycId?: string | null;
+      tokenId?: string | null;
+      accessTokenId?: string | null;
       directLink?: string | null;
       mode?: string | null;
       availableModes?: KycModeOption[];
@@ -187,8 +190,6 @@ export default function TenantOnboarding() {
   const [uploadingPassport, setUploadingPassport] = useState(false);
   const [passportError, setPassportError] = useState<string | null>(null);
   const [passportSuccess, setPassportSuccess] = useState<string | null>(null);
-
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
 
   useEffect(() => {
     if (!id) return;

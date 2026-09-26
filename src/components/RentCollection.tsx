@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../config/api';
 import {
   CheckCircle2,
   Calendar,
@@ -74,8 +75,6 @@ export default function RentCollection() {
   const [includeRent, setIncludeRent] = useState(true);
   const [includeSecurity, setIncludeSecurity] = useState(true);
   const [includeMisc, setIncludeMisc] = useState(true);
-
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://am4eey3lmk.execute-api.ap-south-1.amazonaws.com/api';
 
   useEffect(() => {
     if (!id) return;
