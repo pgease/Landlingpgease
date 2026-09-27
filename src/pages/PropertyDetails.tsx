@@ -9,6 +9,11 @@ import {
   Video,
   Eye,
   PhoneCall,
+  Phone,
+  Globe,
+  ExternalLink,
+  Utensils,
+  UtensilsCrossed,
   Users,
   ChevronDown,
   ChevronUp,
@@ -70,6 +75,18 @@ export default function PropertyDetails() {
           const tPrice = Number(p.tripleSharingPrice) || listing.pricing?.triple?.withFood || 0;
           const fPrice = Number(p.fourSharingPrice) || listing.pricing?.fourSharing?.withFood || 0;
 
+          const sWithFood = listing.pricing?.single?.withFood || sPrice || 14000;
+          const sWithoutFood = listing.pricing?.single?.withoutFood || (sWithFood > 2500 ? sWithFood - 2500 : Math.round(sWithFood * 0.8));
+
+          const dWithFood = listing.pricing?.double?.withFood || dPrice || 9000;
+          const dWithoutFood = listing.pricing?.double?.withoutFood || (dWithFood > 2000 ? dWithFood - 2000 : Math.round(dWithFood * 0.8));
+
+          const tWithFood = listing.pricing?.triple?.withFood || tPrice || 7500;
+          const tWithoutFood = listing.pricing?.triple?.withoutFood || (tWithFood > 1800 ? tWithFood - 1800 : Math.round(tWithFood * 0.8));
+
+          const fWithFood = listing.pricing?.fourSharing?.withFood || fPrice || 6000;
+          const fWithoutFood = listing.pricing?.fourSharing?.withoutFood || (fWithFood > 1500 ? fWithFood - 1500 : Math.round(fWithFood * 0.8));
+
           const prices = [sPrice, dPrice, tPrice, fPrice].filter((x) => x > 0);
           const minPrice = prices.length > 0 ? Math.min(...prices) : 8000;
 
@@ -78,12 +95,13 @@ export default function PropertyDetails() {
 
           if (sPrice > 0 || listing.pricing?.single) {
             sharingTypes.push('Single');
-            const rent = listing.pricing?.single?.withFood || sPrice || 14000;
             availableRooms.push({
               type: 'Single',
               label: 'Single Occupancy Room',
-              monthlyRent: rent,
-              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              monthlyRent: sWithFood,
+              monthlyRentWithFood: sWithFood,
+              monthlyRentWithoutFood: sWithoutFood,
+              securityDeposit: sWithFood * (listing.securityDepositMonths || 2),
               amenities: ['Attached Washroom', 'Inverter AC', 'Study Table', '3 Homestyle Meals'],
               currentOccupants: 0,
               maxCapacity: 1,
@@ -93,12 +111,13 @@ export default function PropertyDetails() {
 
           if (dPrice > 0 || listing.pricing?.double) {
             sharingTypes.push('Double');
-            const rent = listing.pricing?.double?.withFood || dPrice || 9000;
             availableRooms.push({
               type: 'Double',
               label: 'Double Sharing Room',
-              monthlyRent: rent,
-              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              monthlyRent: dWithFood,
+              monthlyRentWithFood: dWithFood,
+              monthlyRentWithoutFood: dWithoutFood,
+              securityDeposit: dWithFood * (listing.securityDepositMonths || 2),
               amenities: ['Attached Washroom', 'AC / Fan', 'Wardrobe', '3 Homestyle Meals'],
               currentOccupants: 1,
               maxCapacity: 2,
@@ -108,12 +127,13 @@ export default function PropertyDetails() {
 
           if (tPrice > 0 || listing.pricing?.triple) {
             sharingTypes.push('Triple');
-            const rent = listing.pricing?.triple?.withFood || tPrice || 7500;
             availableRooms.push({
               type: 'Triple',
               label: 'Triple Sharing Room',
-              monthlyRent: rent,
-              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              monthlyRent: tWithFood,
+              monthlyRentWithFood: tWithFood,
+              monthlyRentWithoutFood: tWithoutFood,
+              securityDeposit: tWithFood * (listing.securityDepositMonths || 2),
               amenities: ['Shared Washroom', 'Cupboard', 'WiFi', '3 Homestyle Meals'],
               currentOccupants: 2,
               maxCapacity: 3,
@@ -123,12 +143,13 @@ export default function PropertyDetails() {
 
           if (fPrice > 0 || listing.pricing?.fourSharing) {
             sharingTypes.push('Triple+');
-            const rent = listing.pricing?.fourSharing?.withFood || fPrice || 6000;
             availableRooms.push({
               type: 'Triple+',
               label: 'Four Sharing Bed',
-              monthlyRent: rent,
-              securityDeposit: rent * (listing.securityDepositMonths || 2),
+              monthlyRent: fWithFood,
+              monthlyRentWithFood: fWithFood,
+              monthlyRentWithoutFood: fWithoutFood,
+              securityDeposit: fWithFood * (listing.securityDepositMonths || 2),
               amenities: ['Shared Washroom', 'Locker', 'WiFi', 'Meals'],
               currentOccupants: 3,
               maxCapacity: 4,
@@ -141,6 +162,8 @@ export default function PropertyDetails() {
               type: 'Single',
               label: 'Standard PG Room',
               monthlyRent: minPrice,
+              monthlyRentWithFood: minPrice,
+              monthlyRentWithoutFood: Math.max(minPrice - 2000, Math.round(minPrice * 0.8)),
               securityDeposit: minPrice * 2,
               amenities: ['WiFi', 'Housekeeping', 'Security'],
               currentOccupants: 0,
@@ -175,6 +198,8 @@ export default function PropertyDetails() {
             address: p.address || 'Central Location',
             city: p.cityName || 'Delhi NCR',
             area: p.address?.split(',')[1]?.trim() || 'Central',
+            contactNumber: p.mobileContactNumber || listing.contactNumber || p.adminPhone || '+91 99905 55580',
+            website: listing.website || p.website || `https://${(p.propertyCode || p.name || 'stay').toLowerCase().replace(/[^a-z0-9]/g, '')}.pgease.com`,
             startingPrice: minPrice,
             displayPrice: `Starts from ₹${minPrice.toLocaleString('en-IN')}`,
             images,
@@ -205,7 +230,7 @@ export default function PropertyDetails() {
             },
             amenities: formattedAmenities,
             rentPackages: [
-              { name: 'Room Rent', price: `₹${minPrice.toLocaleString('en-IN')}`, included: true },
+              { name: 'Room Rent (With Food)', price: `₹${minPrice.toLocaleString('en-IN')}`, included: true },
               { name: '3 Meals Daily', price: 'Included', included: true },
               { name: 'High-speed WiFi', price: 'Included', included: true },
               { name: 'Electricity Bill', price: 'As per meter reading', included: false },
@@ -242,7 +267,7 @@ export default function PropertyDetails() {
               },
               {
                 question: 'Are meals included in the monthly rent?',
-                answer: 'Yes, 3 hygienic homestyle meals (Breakfast, Lunch, Dinner) are provided with daily varying menus.',
+                answer: 'Yes, both With Food (3 hygienic homestyle meals) and Without Food accommodation packages are available according to your preference.',
               },
             ],
           };
@@ -269,6 +294,7 @@ export default function PropertyDetails() {
   const isWishlisted = property ? isInWishlist(property.id) : false;
 
   // States
+  const [mealPlan, setMealPlan] = useState<'withFood' | 'withoutFood'>('withFood');
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
   const [nearbyTab, setNearbyTab] = useState<'Utilities' | 'Transit' | 'Food' | 'Shopping'>('Utilities');
   const [isShareCopied, setIsShareCopied] = useState(false);
@@ -316,7 +342,7 @@ export default function PropertyDetails() {
   };
 
   const filteredNearby = property.nearbyPlaces.filter((n) => n.category === nearbyTab);
-  const similarProperties = mockProperties.filter((p) => p.id !== property.id).slice(0, 2);
+  const similarProperties = mockProperties.filter((p) => p.id !== property.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
@@ -441,18 +467,207 @@ export default function PropertyDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Property Information */}
           <div className="lg:col-span-8 space-y-8">
-            {/* About Property */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-3">About Property</h2>
+            {/* About Property with Number & Official Website */}
+            <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <h2 className="text-lg font-bold text-slate-900">About Property</h2>
+                {property.verified && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Verified by PG Ease
+                  </span>
+                )}
+              </div>
+
               <p className={`text-slate-600 text-sm leading-relaxed ${!isAboutExpanded ? 'line-clamp-3' : ''}`}>
                 {property.about}
               </p>
               <button
                 onClick={() => setIsAboutExpanded(!isAboutExpanded)}
-                className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
               >
                 {isAboutExpanded ? 'View less' : 'View more'}
               </button>
+
+              {/* Number and Website Badges / Action Bars */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-blue-100/80 text-blue-600 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Property Number</span>
+                      <a
+                        href={`tel:${property.contactNumber || property.owner.phone || '+91 99905 55580'}`}
+                        className="text-xs font-bold text-slate-800 hover:text-blue-600 transition-colors"
+                      >
+                        {property.contactNumber || property.owner.phone || '+91 99905 55580'}
+                      </a>
+                    </div>
+                  </div>
+                  <a
+                    href={`tel:${property.contactNumber || property.owner.phone || '+91 99905 55580'}`}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                  >
+                    Call Host
+                  </a>
+                </div>
+
+                <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <div className="truncate">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Property Website</span>
+                      <a
+                        href={property.website || `https://${property.slug || 'stay'}.pgease.com`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-slate-800 hover:text-emerald-700 truncate block transition-colors"
+                      >
+                        {property.website ? property.website.replace(/^https?:\/\//, '') : `${property.slug || 'stay'}.pgease.com`}
+                      </a>
+                    </div>
+                  </div>
+                  <a
+                    href={property.website || `https://${property.slug || 'stay'}.pgease.com`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs flex items-center gap-1 shrink-0 transition-colors"
+                  >
+                    Visit <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            </section>
+
+            {/* Room Details & Pricing (With Food & Without Food explicit rent) */}
+            <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Room Details & Pricing</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Compare rents for With Food (3 daily meals) vs Without Food accommodation.
+                  </p>
+                </div>
+                <div className="inline-flex p-1 bg-slate-100 rounded-xl text-xs font-bold">
+                  <button
+                    onClick={() => setMealPlan('withFood')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                      mealPlan === 'withFood'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Utensils className="w-3.5 h-3.5" />
+                    With Food
+                  </button>
+                  <button
+                    onClick={() => setMealPlan('withoutFood')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                      mealPlan === 'withoutFood'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <UtensilsCrossed className="w-3.5 h-3.5" />
+                    Without Food
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {property.availableRooms.map((room, idx) => {
+                  const withFoodRent = room.monthlyRentWithFood || room.monthlyRent;
+                  const withoutFoodRent = room.monthlyRentWithoutFood || Math.max(withFoodRent - 2500, Math.round(withFoodRent * 0.8));
+                  const isSelected = selectedRoomIndex === idx;
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedRoomIndex(idx)}
+                      className={`cursor-pointer rounded-2xl p-5 border-2 transition-all ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50/20 shadow-sm ring-2 ring-blue-600/10'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div>
+                          <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wide flex items-center gap-1">
+                            <BedDouble className="w-3.5 h-3.5" />
+                            {room.type} Sharing
+                          </span>
+                          <h3 className="font-extrabold text-slate-900 text-base">{room.label}</h3>
+                        </div>
+                        <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
+                          room.availableBeds > 0
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {room.availableBeds > 0 ? `${room.availableBeds} bed available` : 'Full'}
+                        </span>
+                      </div>
+
+                      {/* Pricing Comparison Box */}
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-3 space-y-2">
+                        <div className={`flex items-center justify-between text-xs p-2 rounded-lg ${
+                          mealPlan === 'withFood' ? 'bg-emerald-50 border border-emerald-200 text-emerald-950 font-bold' : 'text-slate-600'
+                        }`}>
+                          <span className="flex items-center gap-1.5">
+                            <Utensils className="w-3.5 h-3.5 text-emerald-600" />
+                            Rent With Food:
+                          </span>
+                          <span className="text-sm font-extrabold text-emerald-700">
+                            ₹{withFoodRent.toLocaleString('en-IN')}<span className="text-[11px] font-medium text-slate-500"> /month</span>
+                          </span>
+                        </div>
+
+                        <div className={`flex items-center justify-between text-xs p-2 rounded-lg ${
+                          mealPlan === 'withoutFood' ? 'bg-slate-200/70 border border-slate-300 text-slate-950 font-bold' : 'text-slate-600'
+                        }`}>
+                          <span className="flex items-center gap-1.5">
+                            <UtensilsCrossed className="w-3.5 h-3.5 text-slate-500" />
+                            Rent Without Food:
+                          </span>
+                          <span className="text-sm font-extrabold text-slate-900">
+                            ₹{withoutFoodRent.toLocaleString('en-IN')}<span className="text-[11px] font-medium text-slate-500"> /month</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 mb-3">
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Room Amenities</span>
+                        <div className="flex flex-wrap gap-1">
+                          {room.amenities.map((am, i) => (
+                            <span key={i} className="text-[11px] px-2 py-0.5 bg-slate-100 rounded text-slate-700">
+                              {am}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                        <span className="text-slate-500 font-medium">
+                          Deposit: <strong>₹{room.securityDeposit.toLocaleString('en-IN')}</strong>
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRoomIndex(idx);
+                            setIsInquiryOpen(true);
+                          }}
+                          className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors text-xs shadow-xs"
+                        >
+                          Select Room
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
 
             {/* Renting Terms Table */}
@@ -569,7 +784,7 @@ export default function PropertyDetails() {
               </div>
 
               {/* Map Preview Graphic */}
-              <div className="relative h-56 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+              <div className="relative h-60 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                 <iframe
                   title="Property Location"
                   className="w-full h-full border-0"
@@ -579,6 +794,22 @@ export default function PropertyDetails() {
                 <div className="absolute bottom-3 left-3 bg-white/95 px-3 py-1.5 rounded-lg shadow-md text-xs font-semibold text-slate-800">
                   {property.locationDetails.landmark || property.address}
                 </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-slate-600 font-medium flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  {property.address}
+                </span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${property.locationDetails.latitude},${property.locationDetails.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Open in Google Maps
+                </a>
               </div>
             </section>
 
@@ -663,40 +894,69 @@ export default function PropertyDetails() {
               </a>
             </section>
 
-            {/* Similar Properties (PDF 2, Page 2) */}
+            {/* More Properties Near You / Nearby Properties */}
             <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-slate-900">Similar properties</h2>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">More properties near you</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">Explore verified stays nearby in {property.city || property.area}</p>
+                </div>
                 <Link
                   to="/find-properties"
                   className="text-xs font-semibold text-blue-600 hover:underline"
                 >
-                  View other similar properties
+                  View all properties
                 </Link>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {similarProperties.map((sim) => (
-                  <div
-                    key={sim.id}
-                    className="border border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 transition-all"
-                  >
-                    <img src={sim.images[0]} alt={sim.name} className="w-full h-36 object-cover" />
-                    <div className="p-4">
-                      <h4 className="font-bold text-sm text-slate-900 mb-1">{sim.name}</h4>
-                      <p className="text-xs text-slate-500 mb-2">{sim.address}</p>
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <span className="text-xs font-bold text-emerald-600">{sim.displayPrice}</span>
-                        <Link
-                          to={`/properties/${sim.id}`}
-                          className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg"
-                        >
-                          I'm interested
-                        </Link>
+                {similarProperties.map((sim) => {
+                  const withFoodRent = sim.startingPrice;
+                  const withoutFoodRent = Math.max(sim.startingPrice - 2000, Math.round(sim.startingPrice * 0.8));
+
+                  return (
+                    <div
+                      key={sim.id}
+                      className="border border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 hover:shadow-sm transition-all flex flex-col justify-between"
+                    >
+                      <div className="relative h-40 overflow-hidden group">
+                        <img src={sim.images[0]} alt={sim.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                          {sim.genderLabel}
+                        </span>
+                      </div>
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-900 mb-1">{sim.name}</h4>
+                          <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            {sim.address}
+                          </p>
+                          {/* Food Rent and Without Food Breakdown */}
+                          <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-[11px] mb-3 border border-slate-100">
+                            <div>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">With Food</span>
+                              <span className="font-extrabold text-emerald-700">₹{withFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Without Food</span>
+                              <span className="font-extrabold text-slate-800">₹{withoutFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <span className="text-xs font-bold text-emerald-600">{sim.displayPrice}</span>
+                          <Link
+                            to={`/properties/${sim.id}`}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                          >
+                            View Details
+                          </Link>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -785,7 +1045,28 @@ export default function PropertyDetails() {
 
               {/* Available Rooms Section (PDF 2, Page 1) */}
               <div className="pt-5 border-t border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Available Rooms</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-slate-900">Available Rooms</h3>
+                  {/* Meal Plan mini switcher */}
+                  <div className="inline-flex p-0.5 bg-slate-100 rounded-lg text-[10px] font-bold">
+                    <button
+                      onClick={() => setMealPlan('withFood')}
+                      className={`px-2 py-0.5 rounded-md transition-all ${
+                        mealPlan === 'withFood' ? 'bg-emerald-600 text-white' : 'text-slate-600'
+                      }`}
+                    >
+                      With Food
+                    </button>
+                    <button
+                      onClick={() => setMealPlan('withoutFood')}
+                      className={`px-2 py-0.5 rounded-md transition-all ${
+                        mealPlan === 'withoutFood' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                      }`}
+                    >
+                      No Food
+                    </button>
+                  </div>
+                </div>
 
                 {/* Sharing Tabs */}
                 <div className="flex bg-slate-100 p-1 rounded-xl mb-4">
@@ -805,50 +1086,72 @@ export default function PropertyDetails() {
                 </div>
 
                 {/* Selected Room Details Card */}
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <BedDouble className="w-4 h-4 text-blue-600" />
-                      {selectedRoom.label}
-                    </span>
-                    <span className="text-sm font-bold text-emerald-600">
-                      ₹{selectedRoom.monthlyRent.toLocaleString('en-IN')}/mo
-                    </span>
-                  </div>
+                {(() => {
+                  const withFoodRent = selectedRoom.monthlyRentWithFood || selectedRoom.monthlyRent;
+                  const withoutFoodRent = selectedRoom.monthlyRentWithoutFood || Math.max(withFoodRent - 2500, Math.round(withFoodRent * 0.8));
+                  const currentRent = mealPlan === 'withFood' ? withFoodRent : withoutFoodRent;
 
-                  <div>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                      Room Amenities
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedRoom.amenities.map((am, i) => (
-                        <span
-                          key={i}
-                          className="text-[11px] px-2 py-0.5 bg-white border border-slate-200 rounded-md text-slate-600"
-                        >
-                          {am}
+                  return (
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <BedDouble className="w-4 h-4 text-blue-600" />
+                          {selectedRoom.label}
                         </span>
-                      ))}
+                        <div className="text-right">
+                          <span className="text-base font-extrabold text-emerald-700 block">
+                            ₹{currentRent.toLocaleString('en-IN')}<span className="text-xs font-normal text-slate-500">/mo</span>
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {mealPlan === 'withFood' ? '🍱 Meals Included' : '🍽️ Room Only'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-2 rounded-lg border border-slate-200/80 text-[11px] flex items-center justify-between">
+                        <span className="text-slate-500">
+                          Without Food: <strong className="text-slate-800">₹{withoutFoodRent.toLocaleString('en-IN')}</strong>
+                        </span>
+                        <span className="text-slate-500">
+                          With Food: <strong className="text-emerald-700">₹{withFoodRent.toLocaleString('en-IN')}</strong>
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                          Room Amenities
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedRoom.amenities.map((am, i) => (
+                            <span
+                              key={i}
+                              className="text-[11px] px-2 py-0.5 bg-white border border-slate-200 rounded-md text-slate-600"
+                            >
+                              {am}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-600">
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                          {selectedRoom.currentOccupants} Tenants staying
+                        </span>
+                        <span className="font-semibold text-emerald-600">
+                          {selectedRoom.availableBeds} bed available
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => setIsInquiryOpen(true)}
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm"
+                      >
+                        Reserve Now
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      {selectedRoom.currentOccupants} Tenants staying
-                    </span>
-                    <span className="font-semibold text-emerald-600">
-                      {selectedRoom.availableBeds} bed available
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => setIsInquiryOpen(true)}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm"
-                  >
-                    Reserve Now
-                  </button>
-                </div>
+                  );
+                })()}
               </div>
             </div>
           </aside>

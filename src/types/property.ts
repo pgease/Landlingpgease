@@ -26,6 +26,8 @@ export interface RoomOption {
   type: RoomSharingType;
   label: string; // e.g. "Single sharing"
   monthlyRent: number;
+  monthlyRentWithFood?: number;
+  monthlyRentWithoutFood?: number;
   securityDeposit: number;
   amenities: string[];
   currentOccupants: number;
@@ -55,6 +57,8 @@ export interface Property {
   address: string;
   city: string;
   area: string;
+  contactNumber?: string;
+  website?: string;
   startingPrice: number; // numeric for filtering
   displayPrice: string; // e.g. "Starts from ₹8,000" or "For rent, contact management"
   images: string[];

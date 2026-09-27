@@ -769,10 +769,17 @@ export default function PropertySearch() {
                         {/* Rent & Action */}
                         <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                           <div>
-                            <span className="text-[10px] text-slate-400 font-semibold block uppercase">Rent Starts</span>
-                            <span className="text-base font-black text-slate-900">
-                              ₹{property.startingPrice.toLocaleString('en-IN')}
-                              <span className="text-xs text-slate-500 font-normal">/mo</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base font-black text-slate-900">
+                                ₹{property.startingPrice.toLocaleString('en-IN')}
+                                <span className="text-xs text-slate-500 font-normal">/mo</span>
+                              </span>
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                With Food
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 font-medium block">
+                              Without food from ₹{Math.max(property.startingPrice - 2000, Math.round(property.startingPrice * 0.8)).toLocaleString('en-IN')}/mo
                             </span>
                           </div>
 
