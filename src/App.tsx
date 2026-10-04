@@ -18,6 +18,8 @@ import RentCollection from './components/RentCollection';
 import TenantOnboarding from './components/TenantOnboarding';
 import DemoDeck from './components/DemoDeck';
 import BookDemoModal from './components/BookDemoModal';
+import FloatingWhatsApp from './components/FloatingWhatsApp';
+import { WishlistProvider } from './context/WishlistContext';
 
 import FeaturedPropertiesSection from './components/FeaturedPropertiesSection';
 
@@ -64,11 +66,9 @@ function Home() {
   );
 }
 
-import { WishlistProvider } from './context/WishlistContext';
-
 function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter>
       <WishlistProvider>
         <ScrollToTop />
         <Routes>
@@ -101,6 +101,7 @@ function App() {
         <Route path="/rent-collection/:id" element={<RentCollection />} />
         <Route path="/onboarding/:id" element={<TenantOnboarding />} />
       </Routes>
+      <FloatingWhatsApp />
       </WishlistProvider>
     </BrowserRouter>
   );
