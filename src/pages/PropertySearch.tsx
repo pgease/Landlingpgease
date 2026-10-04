@@ -22,7 +22,6 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import InquiryModal from '../components/InquiryModal';
-import { mockProperties } from '../data/mockProperties';
 import { Property, RoomSharingType, ResidentType } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
@@ -165,62 +164,109 @@ export default function PropertySearch() {
         const res = await fetch(`${API_BASE}/properties/public/search?${params.toString()}`);
         if (!res.ok) throw new Error(`Search error: ${res.status}`);
         const json = await res.json();
-        const items = json?.data?.items || json?.items || [];
+        const items = Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json?.data?.items)
+          ? json.data.items
+          : Array.isArray(json?.items)
+          ? json.items
+          : Array.isArray(json)
+          ? json
+          : [];
 
         if (isMounted && Array.isArray(items) && items.length > 0) {
           const mapped: Property[] = items.map((item: any) => {
-            const minRent = Number(
-              item.startingRent ||
-                item.pricing?.singleSharing ||
-                item.pricing?.doubleSharing ||
-                item.pricing?.tripleSharing ||
-                item.pricing?.fourSharing ||
-                7000
-            );
+            const rents = [
+              item.startingRent,
+              item.pricing?.fourSharing,
+              item.pricing?.tripleSharing,
+              item.pricing?.doubleSharing,
+              item.pricing?.singleSharing,
+              item.fourSharingPrice,
+              item.tripleSharingPrice,
+              item.doubleSharingPrice,
+              item.singleSharingPrice,
+            ]
+              .map(Number)
+              .filter((n) => Number.isFinite(n) && n > 0);
+            const minRent = rents.length > 0 ? Math.min(...rents) : 7000;
+
+            const availableSharing: RoomSharingType[] = [];
+            if (item.pricing?.singleSharing || item.singleSharingPrice) availableSharing.push('Single');
+            if (item.pricing?.doubleSharing || item.doubleSharingPrice) availableSharing.push('Double');
+            if (item.pricing?.tripleSharing || item.tripleSharingPrice) availableSharing.push('Triple');
+            if (item.pricing?.fourSharing || item.fourSharingPrice) availableSharing.push('Triple+');
+            const sharingTypes =
+              availableSharing.length > 0
+                ? availableSharing
+                : (['Single', 'Double', 'Triple', 'Triple+'] as RoomSharingType[]);
+
+            const propType = (item.propertyType || item.propertyTypeName || '').toLowerCase();
+            const itemGender = (item.gender || '').toLowerCase();
+            const isGirls =
+              propType.includes('girl') ||
+              propType.includes('female') ||
+              itemGender === 'girls' ||
+              itemGender === 'female';
+            const isBoys =
+              propType.includes('boy') ||
+              propType.includes('male') ||
+              itemGender === 'boys' ||
+              itemGender === 'male';
+            const gender: 'Male' | 'Female' | 'Any' = isGirls ? 'Female' : isBoys ? 'Male' : 'Any';
+            const genderLabel = isGirls ? 'Girls PG' : isBoys ? 'Boys PG' : 'Co-ed / Unisex PG';
+
+            const cityName =
+              item.cityName ||
+              item.city?.name ||
+              (typeof item.city === 'string' ? item.city : null) ||
+              'Delhi NCR';
+
+            const photos =
+              Array.isArray(item.photos) && item.photos.length > 0
+                ? item.photos
+                : item.coverPhotoUrl
+                ? [item.coverPhotoUrl]
+                : [
+                    'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1000&q=80',
+                  ];
 
             return {
               id: item.id,
               slug: item.slug || item.id,
               name: item.name,
               verified: Boolean(item.isVerified ?? true),
-              distanceKm: item.distanceKm !== undefined && item.distanceKm !== null ? Number(item.distanceKm) : undefined,
-              address: item.address || `${item.cityName || 'Delhi NCR'}, India`,
-              city: item.cityName || 'Delhi NCR',
-              area: item.area || item.cityName || 'Central',
+              distanceKm:
+                item.distanceKm !== undefined && item.distanceKm !== null
+                  ? Number(item.distanceKm)
+                  : undefined,
+              address: item.address || `${cityName}, India`,
+              city: cityName,
+              area: item.area || cityName || 'Central',
               startingPrice: minRent,
               displayPrice: `Starts from ₹${minRent.toLocaleString('en-IN')}`,
-              images:
-                Array.isArray(item.photos) && item.photos.length > 0
-                  ? item.photos
-                  : [
-                      item.coverPhotoUrl ||
-                        'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1000&q=80',
-                    ],
-              sharingTypes: (['Single', 'Double', 'Triple', 'Triple+'] as RoomSharingType[]),
-              gender:
-                (item.propertyTypeName || '').toLowerCase().includes('girl') || item.gender === 'girls'
-                  ? 'Female'
-                  : (item.propertyTypeName || '').toLowerCase().includes('boy') || item.gender === 'boys'
-                  ? 'Male'
-                  : 'Any',
-              genderLabel:
-                (item.propertyTypeName || '').toLowerCase().includes('girl') || item.gender === 'girls'
-                  ? 'Girls PG'
-                  : (item.propertyTypeName || '').toLowerCase().includes('boy') || item.gender === 'boys'
-                  ? 'Boys PG'
-                  : 'Co-ed / Unisex PG',
+              images: photos,
+              sharingTypes,
+              gender,
+              genderLabel,
               residentType: 'All',
               residentTypeLabel: 'Students & Professionals',
-              securityDepositPeriod: '1 Month',
-              about: item.description || `${item.name} is a verified PG stay with hygienic meals, high-speed WiFi, and 24x7 security.`,
+              securityDepositPeriod: item.securityDepositMonths ? `${item.securityDepositMonths} Months` : '1 Month',
+              about:
+                item.description ||
+                `${item.name} is a verified PG stay with hygienic meals, high-speed WiFi, and 24x7 security.`,
               rentingTerms: {
                 rent: `₹${minRent.toLocaleString('en-IN')} / month`,
-                securityDeposit: '1 Month Rent',
+                securityDeposit: `${item.securityDepositMonths || 1} Month Rent`,
                 lockinPeriod: '1 Month',
-                noticePeriod: '30 Days',
+                noticePeriod: `${item.noticePeriodDays || 30} Days`,
               },
               amenities: Array.isArray(item.amenities)
-                ? item.amenities.map((a: string, i: number) => ({ id: `am-${i}`, name: a, category: 'Common' }))
+                ? item.amenities.map((a: any, i: number) => ({
+                    id: `am-${i}`,
+                    name: typeof a === 'string' ? a : a?.name || 'Amenity',
+                    category: 'Common',
+                  }))
                 : [
                     { id: '1', name: 'High-speed WiFi', category: 'Common' },
                     { id: '2', name: 'Power Backup', category: 'Common' },
@@ -228,19 +274,28 @@ export default function PropertySearch() {
                     { id: '4', name: '24x7 Security', category: 'Services' },
                   ],
               rentPackages: [],
-              rules: ['Gate closes at 11:00 PM', 'Keep common areas clean'],
+              rules: Array.isArray(item.houseRules)
+                ? item.houseRules
+                : Array.isArray(item.restrictions)
+                ? item.restrictions
+                : ['Gate closes at 11:00 PM', 'Keep common areas clean'],
               locationDetails: {
                 latitude: Number(item.latitude || 28.6139),
-                longitude: Number(item.longitude || 77.2090),
+                longitude: Number(item.longitude || 77.209),
                 googleMapUrl: item.googleMapUrl,
                 landmark: item.landmark,
               },
               nearbyPlaces: Array.isArray(item.nearbyPlaces)
-                ? item.nearbyPlaces.map((p: string) => ({ name: p, distance: 'Nearby', category: 'Utilities' }))
+                ? item.nearbyPlaces.map((p: any) => ({
+                    name: typeof p === 'string' ? p : p?.name || 'Nearby',
+                    distance: 'Nearby',
+                    category: 'Utilities',
+                  }))
                 : [],
               owner: {
-                name: 'PG Ease Verified Host',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+                name: item.adminName || 'PG Ease Verified Host',
+                avatar:
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
                 bio: 'Verified host on PG Ease network.',
               },
               availableRooms: [],
@@ -317,12 +372,9 @@ export default function PropertySearch() {
     setSortBy('relevance');
   };
 
-  // Combined Properties list
+  // Live Properties list from API (no hardcoded properties)
   const filteredProperties = useMemo(() => {
-    const combined = [
-      ...apiProperties,
-      ...mockProperties.filter((mp) => !apiProperties.some((ap) => ap.id === mp.id)),
-    ];
+    const combined = apiProperties;
 
     let result = combined.filter((property) => {
       // City filter
@@ -475,12 +527,15 @@ export default function PropertySearch() {
                 onChange={(e) => setSelectedCity(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none cursor-pointer focus:border-brand-500 transition-colors appearance-none"
               >
-                <option value="All">All Cities (Delhi NCR)</option>
+                <option value="All">All Cities</option>
                 <option value="Delhi">Delhi NCR</option>
+                <option value="New Delhi">New Delhi</option>
                 <option value="Noida">Noida</option>
                 <option value="Gurgaon">Gurugram</option>
                 <option value="Greater Noida">Greater Noida</option>
                 <option value="Ghaziabad">Ghaziabad</option>
+                <option value="Lucknow">Lucknow</option>
+                <option value="Bengaluru">Bengaluru</option>
               </select>
             </div>
 

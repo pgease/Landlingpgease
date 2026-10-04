@@ -4,10 +4,9 @@ import { Link, useLocation } from 'react-router-dom';
 
 const navLinks = [
   { href: '/find-properties', label: 'Find Properties', isInternal: true },
-  { href: '/blog', label: 'Blog', isInternal: true },
-  { href: '/list-your-property', label: 'List Property', isInternal: true },
   { href: '/#features', label: 'Features', isInternal: false },
   { href: '/#pricing', label: 'Pricing', isInternal: false },
+  { href: '/blog', label: 'Blog', isInternal: true },
 ];
 
 interface NavbarProps {

@@ -27,7 +27,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import InquiryModal from '../components/InquiryModal';
 import ScheduleTourModal, { TourType } from '../components/ScheduleTourModal';
-import { mockProperties } from '../data/mockProperties';
 import { Property, RoomSharingType, Amenity, RoomOption } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
@@ -35,18 +34,10 @@ import { API_BASE } from '../config/api';
 
 export default function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
-  const initialMock = mockProperties.find((p) => p.id === id) || null;
-  const [property, setProperty] = useState<Property | null>(initialMock);
-  const [loading, setLoading] = useState(!initialMock);
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const existing = mockProperties.find((p) => p.id === id);
-    if (existing) {
-      setProperty(existing);
-      setLoading(false);
-      return;
-    }
-
     if (!id) return;
 
     let isMounted = true;
@@ -273,10 +264,72 @@ export default function PropertyDetails() {
           };
 
           setProperty(transformed);
+
+          // Fetch similar real properties from API
+          try {
+            const simRes = await fetch(`${API_BASE}/properties/public/search?limit=6`);
+            if (simRes.ok) {
+              const simJson = await simRes.json();
+              const simItems = Array.isArray(simJson?.data)
+                ? simJson.data
+                : Array.isArray(simJson?.data?.items)
+                ? simJson.data.items
+                : [];
+              const mappedSim = simItems
+                .filter((item: any) => item.id !== id)
+                .slice(0, 4)
+                .map((item: any) => {
+                  const sPrice = Number(
+                    item.startingRent || item.pricing?.singleSharing || 7000,
+                  );
+                  return {
+                    id: item.id,
+                    slug: item.slug || item.id,
+                    name: item.name,
+                    verified: true,
+                    address: item.address || item.cityName || 'Delhi NCR',
+                    city: item.cityName || 'Delhi NCR',
+                    area: item.cityName || 'Central',
+                    startingPrice: sPrice,
+                    displayPrice: `Starts from ₹${sPrice.toLocaleString('en-IN')}`,
+                    images:
+                      Array.isArray(item.photos) && item.photos.length > 0
+                        ? item.photos
+                        : [
+                            'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1000&q=80',
+                          ],
+                    sharingTypes: ['Single', 'Double', 'Triple'] as RoomSharingType[],
+                    gender: 'Any' as const,
+                    genderLabel: 'Co-ed / Verified PG',
+                    residentType: 'All',
+                    residentTypeLabel: 'Students & Professionals',
+                    securityDepositPeriod: '1 Month',
+                    about: item.description || '',
+                    rentingTerms: {
+                      rent: '',
+                      securityDeposit: '',
+                      lockinPeriod: '',
+                      noticePeriod: '',
+                    },
+                    amenities: [],
+                    rentPackages: [],
+                    rules: [],
+                    locationDetails: { latitude: 0, longitude: 0 },
+                    nearbyPlaces: [],
+                    owner: { name: 'Verified Host', avatar: '', bio: '' },
+                    availableRooms: [],
+                    faqs: [],
+                  };
+                });
+              if (isMounted) setSimilarProperties(mappedSim);
+            }
+          } catch {
+            // Ignore similar properties fetch failure
+          }
         }
       } catch {
-        if (isMounted && !property) {
-          setProperty(mockProperties[0]);
+        if (isMounted) {
+          setProperty(null);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -301,6 +354,7 @@ export default function PropertyDetails() {
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [activeFaqIndex, setActiveFaqIndex] = useState<number | null>(null);
+  const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
 
   // Modals
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
@@ -342,7 +396,6 @@ export default function PropertyDetails() {
   };
 
   const filteredNearby = property.nearbyPlaces.filter((n) => n.category === nearbyTab);
-  const similarProperties = mockProperties.filter((p) => p.id !== property.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col">
@@ -895,70 +948,72 @@ export default function PropertyDetails() {
             </section>
 
             {/* More Properties Near You / Nearby Properties */}
-            <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">More properties near you</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Explore verified stays nearby in {property.city || property.area}</p>
+            {similarProperties.length > 0 && (
+              <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">More properties near you</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">Explore verified stays nearby in {property.city || property.area}</p>
+                  </div>
+                  <Link
+                    to="/find-properties"
+                    className="text-xs font-semibold text-blue-600 hover:underline"
+                  >
+                    View all properties
+                  </Link>
                 </div>
-                <Link
-                  to="/find-properties"
-                  className="text-xs font-semibold text-blue-600 hover:underline"
-                >
-                  View all properties
-                </Link>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {similarProperties.map((sim) => {
-                  const withFoodRent = sim.startingPrice;
-                  const withoutFoodRent = Math.max(sim.startingPrice - 2000, Math.round(sim.startingPrice * 0.8));
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {similarProperties.map((sim) => {
+                    const withFoodRent = sim.startingPrice;
+                    const withoutFoodRent = Math.max(sim.startingPrice - 2000, Math.round(sim.startingPrice * 0.8));
 
-                  return (
-                    <div
-                      key={sim.id}
-                      className="border border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 hover:shadow-sm transition-all flex flex-col justify-between"
-                    >
-                      <div className="relative h-40 overflow-hidden group">
-                        <img src={sim.images[0]} alt={sim.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
-                          {sim.genderLabel}
-                        </span>
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900 mb-1">{sim.name}</h4>
-                          <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            {sim.address}
-                          </p>
-                          {/* Food Rent and Without Food Breakdown */}
-                          <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-[11px] mb-3 border border-slate-100">
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">With Food</span>
-                              <span className="font-extrabold text-emerald-700">₹{withFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Without Food</span>
-                              <span className="font-extrabold text-slate-800">₹{withoutFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
+                    return (
+                      <div
+                        key={sim.id}
+                        className="border border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 hover:shadow-sm transition-all flex flex-col justify-between"
+                      >
+                        <div className="relative h-40 overflow-hidden group">
+                          <img src={sim.images[0]} alt={sim.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <span className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-xs text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                            {sim.genderLabel}
+                          </span>
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col justify-between">
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-900 mb-1">{sim.name}</h4>
+                            <p className="text-xs text-slate-500 mb-3 flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              {sim.address}
+                            </p>
+                            {/* Food Rent and Without Food Breakdown */}
+                            <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-xl text-[11px] mb-3 border border-slate-100">
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">With Food</span>
+                                <span className="font-extrabold text-emerald-700">₹{withFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Without Food</span>
+                                <span className="font-extrabold text-slate-800">₹{withoutFoodRent.toLocaleString('en-IN')}<span className="text-[10px] font-medium text-slate-500">/mo</span></span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                          <span className="text-xs font-bold text-emerald-600">{sim.displayPrice}</span>
-                          <Link
-                            to={`/properties/${sim.id}`}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
-                          >
-                            View Details
-                          </Link>
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <span className="text-xs font-bold text-emerald-600">{sim.displayPrice}</span>
+                            <Link
+                              to={`/properties/${sim.id}`}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                            >
+                              View Details
+                            </Link>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* FAQs (PDF 2, Page 2 & 3) */}
             <section className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-sm">
