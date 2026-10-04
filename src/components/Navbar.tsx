@@ -37,7 +37,7 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
           {/* Logo */}
           <Link to="/" className="flex items-center" aria-label="PG Ease Home">
             <img
-              src="/assets/logo-transparent.png"
+              src="/assets/pgease-full-brand-logo.png"
               alt="PG Ease – Modern PG Management Platform"
               className="h-8 sm:h-9 lg:h-10 w-auto"
             />

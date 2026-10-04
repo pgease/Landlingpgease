@@ -38,11 +38,11 @@ export default function Footer() {
           
           {/* Brand Column (spans 2) */}
           <div className="col-span-2 space-y-4">
-            <Link to="/" className="inline-block">
+            <Link to="/" className="inline-block" aria-label="PG Ease Home">
               <img
-                src="/assets/logo-transparent.png"
+                src="/assets/pgease-full-brand-logo-white.png"
                 alt="PG Ease"
-                className="h-9 w-auto"
+                className="h-9 lg:h-10 w-auto"
               />
             </Link>
 
