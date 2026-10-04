@@ -22,9 +22,16 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('pgease_wishlist');
-      return saved ? JSON.parse(saved) : ['madhav-pg-block-a'];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out legacy static IDs
+          return parsed.filter((id: string) => id !== 'madhav-pg-block-a');
+        }
+      }
+      return [];
     } catch {
-      return ['madhav-pg-block-a'];
+      return [];
     }
   });
 
@@ -39,9 +46,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
   }, [wishlistIds]);
 
-  const addToWishlist = (id: string) => {
+  const addToWishlist = (id: string, name?: string) => {
     const prop = mockProperties.find((p) => p.id === id);
-    const propName = prop ? prop.name : 'Property';
+    const propName = name || (prop ? prop.name : 'Property');
     setWishlistIds((prev) => {
       if (prev.includes(id)) return prev;
       showWishlistToast(propName, true);
@@ -49,9 +56,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeFromWishlist = (id: string) => {
+  const removeFromWishlist = (id: string, name?: string) => {
     const prop = mockProperties.find((p) => p.id === id);
-    const propName = prop ? prop.name : 'Property';
+    const propName = name || (prop ? prop.name : 'Property');
     setWishlistIds((prev) => {
       if (!prev.includes(id)) return prev;
       showWishlistToast(propName, false);
