@@ -35,12 +35,12 @@ export default function Footer() {
     <footer className="bg-slate-900 text-white pt-16 pb-8 border-t border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
-          
+
           {/* Brand Column (spans 2) */}
           <div className="col-span-2 space-y-4">
             <Link to="/" className="inline-block" aria-label="PG Ease Home">
               <img
-                src="/assets/pgease-full-brand-logo-white.png"
+                src="/assets/pgease-full-brand-logo.png"
                 alt="PG Ease"
                 className="h-9 lg:h-10 w-auto"
               />
