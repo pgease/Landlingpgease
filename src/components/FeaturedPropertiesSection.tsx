@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Building2,
   Calendar,
-  Loader2,
 } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import InquiryModal from './InquiryModal';
@@ -108,6 +107,13 @@ export default function FeaturedPropertiesSection() {
                     'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
                   ];
 
+            const depositPeriod: '15 days' | '1 Month' | '2 Month' | '3 Month' =
+              item.securityDepositMonths === 2
+                ? '2 Month'
+                : item.securityDepositMonths === 3
+                ? '3 Month'
+                : '1 Month';
+
             return {
               id: item.id,
               slug: item.propertyCode || item.id,
@@ -125,7 +131,7 @@ export default function FeaturedPropertiesSection() {
               genderLabel,
               residentType: 'All',
               residentTypeLabel: 'Students / Working Professionals',
-              securityDepositPeriod: `${item.securityDepositMonths || 1} Month`,
+              securityDepositPeriod: depositPeriod,
               about: item.description || '',
               rentingTerms: {
                 rent: `₹${minRent.toLocaleString('en-IN')} / month`,
@@ -141,6 +147,33 @@ export default function FeaturedPropertiesSection() {
                     iconName: 'Sparkles',
                   }))
                 : [],
+              rentPackages: [],
+              rules: Array.isArray(item.houseRules)
+                ? item.houseRules
+                : Array.isArray(item.restrictions)
+                ? item.restrictions
+                : ['Gate closes at 11:00 PM', 'Keep common areas clean'],
+              locationDetails: {
+                latitude: Number(item.latitude || 28.6139),
+                longitude: Number(item.longitude || 77.209),
+                googleMapUrl: item.googleMapUrl,
+                landmark: item.landmark,
+              },
+              nearbyPlaces: Array.isArray(item.nearbyPlaces)
+                ? item.nearbyPlaces.map((p: any) => ({
+                    name: typeof p === 'string' ? p : p?.name || 'Nearby',
+                    distance: 'Nearby',
+                    category: 'Utilities',
+                  }))
+                : [],
+              owner: {
+                name: item.adminName || 'PG Ease Verified Host',
+                avatar:
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+                bio: 'Verified host on PG Ease network.',
+              },
+              availableRooms: [],
+              faqs: [],
             };
           });
 
