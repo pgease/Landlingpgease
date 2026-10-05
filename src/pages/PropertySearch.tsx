@@ -5,9 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Building,
-  Check,
   Filter,
-  X,
   Navigation,
   Loader2,
   Search,
@@ -22,7 +20,7 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import InquiryModal from '../components/InquiryModal';
-import { Property, RoomSharingType, ResidentType } from '../types/property';
+import { Property, RoomSharingType } from '../types/property';
 import { useWishlist } from '../context/WishlistContext';
 
 import { API_BASE } from '../config/api';
@@ -46,10 +44,8 @@ export default function PropertySearch() {
   // Filter states
   const [selectedSharing, setSelectedSharing] = useState<RoomSharingType[]>([]);
   const [selectedGender, setSelectedGender] = useState<string>('Any');
-  const [selectedResidents, setSelectedResidents] = useState<ResidentType[]>([]);
   const [minBudget, setMinBudget] = useState<number>(0);
   const [maxBudget, setMaxBudget] = useState<number>(50000);
-  const [selectedDeposits, setSelectedDeposits] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Extended Geo-Search & Sorting Filter States
@@ -251,7 +247,12 @@ export default function PropertySearch() {
               genderLabel,
               residentType: 'All',
               residentTypeLabel: 'Students & Professionals',
-              securityDepositPeriod: item.securityDepositMonths ? `${item.securityDepositMonths} Months` : '1 Month',
+              securityDepositPeriod:
+                item.securityDepositMonths === 2
+                  ? '2 Month'
+                  : item.securityDepositMonths === 3
+                  ? '3 Month'
+                  : '1 Month',
               about:
                 item.description ||
                 `${item.name} is a verified PG stay with hygienic meals, high-speed WiFi, and 24x7 security.`,

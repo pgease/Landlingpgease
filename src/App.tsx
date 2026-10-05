@@ -56,7 +56,7 @@ function Home() {
         <SolutionSection />
         <MobileApp />
         <HowItWorks />
-        <Pricing />
+        <Pricing onBookDemo={() => setIsDemoOpen(true)} />
         <Testimonials />
         <FinalCTA onBookDemo={() => setIsDemoOpen(true)} />
       </main>

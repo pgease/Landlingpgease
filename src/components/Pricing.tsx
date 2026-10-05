@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { plansApi, SubscriptionPlan, FALLBACK_PLANS } from '../services/plansApi';
 
-export default function Pricing() {
+interface PricingProps {
+  onBookDemo?: () => void;
+}
+
+export default function Pricing({ onBookDemo }: PricingProps = {}) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>(FALLBACK_PLANS);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -170,6 +174,39 @@ export default function Pricing() {
               </article>
             );
           })}
+        </div>
+
+        {/* White-Label Enterprise Callout */}
+        <div className="mt-12 max-w-4xl mx-auto rounded-3xl border-2 border-brand-500/20 bg-gradient-to-r from-slate-900 via-brand-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/20 text-brand-400 text-xs font-bold uppercase tracking-wider mb-2">
+              White-Label & Custom Branding
+            </div>
+            <h4 className="text-xl font-bold text-white">Want your own branded PG & Hostel App?</h4>
+            <p className="text-sm text-slate-300 max-w-xl">
+              We provide 100% white-labeled mobile apps, private web domains, and branded WhatsApp receipts for your hostel chain.
+            </p>
+          </div>
+          {onBookDemo ? (
+            <button
+              type="button"
+              onClick={onBookDemo}
+              className="shrink-0 px-6 py-3.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-bold text-sm transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
+            >
+              Enquire White-Label
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <a
+              href="https://wa.me/917905804172?text=Hi%2C%20I%20am%20interested%20in%20a%20White-Label%20custom%20branded%20app%20for%20my%20hostel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 px-6 py-3.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-bold text-sm transition-all shadow-md inline-flex items-center gap-2"
+            >
+              Enquire White-Label
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          )}
         </div>
 
         <div className="text-center mt-12">
