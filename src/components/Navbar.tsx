@@ -113,12 +113,12 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
               </button>
             )}
 
-            {/* List PG Free Button */}
+            {/* Post Your Property for Free Button */}
             <Link
               to="/list-your-property"
-              className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm"
+              className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-[#008080] hover:bg-[#006666] active:bg-[#005252] rounded-lg transition-colors shadow-sm"
             >
-              List PG Free
+              Post Your Property for Free
             </Link>
           </div>
 
@@ -196,10 +196,10 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
               )}
               <Link
                 to="/list-your-property"
-                className="block px-4 py-2.5 text-center text-white bg-brand-600 hover:bg-brand-700 rounded-lg font-semibold text-sm shadow-sm"
+                className="block px-4 py-2.5 text-center text-white bg-[#008080] hover:bg-[#006666] active:bg-[#005252] rounded-lg font-semibold text-sm shadow-sm"
                 onClick={() => setIsMenuOpen(false)}
               >
-                List PG Free
+                Post Your Property for Free
               </Link>
             </div>
           </div>
