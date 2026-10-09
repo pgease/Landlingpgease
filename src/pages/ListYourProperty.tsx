@@ -1,11 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import {
   Building2,
-  ShieldCheck,
-  Users,
-  Home,
   CheckCircle2,
   MapPin,
   Search,
@@ -28,13 +24,9 @@ import {
   Car,
   Check,
   Plus,
-  ArrowRight,
   Phone,
   Mail,
-  AlertCircle,
-  FileImage,
   Ban,
-  Layers,
   Compass,
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -319,7 +311,6 @@ export default function ListYourProperty() {
   // Steps: 1 = Property Type, 2 = Information, 3 = Photos, 4 = Review & Submit
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [createdProperty, setCreatedProperty] = useState<any | null>(null);
 
   // Step 1: Property Type (Clean dropdown)
   const [selectedType, setSelectedType] = useState<string>('boys-pg');
@@ -695,7 +686,6 @@ export default function ListYourProperty() {
       const data = await response.json();
 
       if (response.ok && data?.id) {
-        setCreatedProperty(data);
         Swal.fire({
           icon: 'success',
           title: 'Property Listed Successfully!',
