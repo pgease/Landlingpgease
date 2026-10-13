@@ -160,7 +160,9 @@ const sections = [
     title: '12. Contact Information',
     content: (
       <>
-        <p className="font-semibold text-slate-800">PG Ease Solutions</p>
+        <p className="font-semibold text-slate-800">PG EASE SOLUTIONS</p>
+        <p>19/6, Moulsiri Road, Shipra Suncity, Ghaziabad, Uttar Pradesh, 201014</p>
+        <p>GSTIN: 09DNXPG0017E1Z1</p>
         <p>
           Email:{' '}
           <a href="mailto:support@pgeease.in" className="text-brand-600 hover:underline">

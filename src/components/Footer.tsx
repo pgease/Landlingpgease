@@ -52,6 +52,15 @@ export default function Footer() {
 
             {/* Direct Contact Info */}
             <div className="flex flex-col gap-2.5 pt-1 text-sm">
+              <p className="text-slate-300 leading-relaxed">
+                PG EASE SOLUTIONS
+                <br />
+                19/6, Moulsiri Road, Shipra Suncity,
+                <br />
+                Ghaziabad, Uttar Pradesh, 201014
+                <br />
+                GSTIN: 09DNXPG0017E1Z1
+              </p>
               <a
                 href="mailto:support@pgease.in"
                 className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors"
