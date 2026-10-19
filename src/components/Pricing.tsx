@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Check, ArrowRight, Loader2 } from 'lucide-react';
-import { plansApi, ProPlanCatalog } from '../services/plansApi';
+import { Check, ArrowRight } from 'lucide-react';
+import { plansApi, ProPlanCatalog, STATIC_PRO_PLAN } from '../services/plansApi';
 
 interface PricingProps {
   onBookDemo?: () => void;
@@ -9,24 +9,14 @@ interface PricingProps {
 const SIGNUP_URL = 'https://app.pgease.in/signup';
 
 export default function Pricing({ onBookDemo }: PricingProps = {}) {
-  const [catalog, setCatalog] = useState<ProPlanCatalog | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [catalog, setCatalog] = useState<ProPlanCatalog>(STATIC_PRO_PLAN);
   const [cycle, setCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   useEffect(() => {
     let mounted = true;
-    plansApi
-      .getCatalog()
-      .then((next) => {
-        if (mounted) setCatalog(next);
-      })
-      .catch((err: Error) => {
-        if (mounted) setError(err.message || 'Pricing is unavailable');
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    plansApi.getCatalog().then((next) => {
+      if (mounted) setCatalog(next);
+    });
     return () => {
       mounted = false;
     };
@@ -62,18 +52,7 @@ export default function Pricing({ onBookDemo }: PricingProps = {}) {
           </div>
         </div>
 
-        {loading && (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
-            <span className="ml-2 text-sm text-slate-500">Loading pricing…</span>
-          </div>
-        )}
-
-        {error && !catalog && (
-          <p className="text-center text-sm text-red-600 mb-8">{error}</p>
-        )}
-
-        {selected && catalog && (
+        {selected && (
           <article className="relative max-w-xl mx-auto rounded-3xl border-2 border-brand-500 bg-white p-8 sm:p-10 shadow-xl">
             {catalog.offer.badge && (
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-[11px] font-extrabold px-4 py-1 rounded-full">

@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     question: 'Is PG Ease suitable for small PG owners?',
-    answer: 'Yes. Every new PG owner receives a 45-day free trial of our Pro Plan upon signup with zero upfront cost and full feature access. You get complete operations, tenant management, electricity billing, and your own Dedicated Account Manager. After the trial, you can continue on Lite for just ₹29/bed/month or maintain full automation on Pro for ₹49/bed/month.',
+    answer: 'Yes. There is one plan, PG Ease Pro, at ₹29 per bed per month (₹49 shown crossed out during the Diwali offer). Yearly is ₹290 per bed. You can collect rent by manual UPI or a payment gateway. GST is 18% extra.',
   },
   {
     question: 'How does PG Ease help automate PG operations?',
