@@ -1398,19 +1398,23 @@ export default function TenantOnboarding() {
                     Digital Rental Agreement
                     {data.steps.agreement.isCompleted && (
                       <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
-                        eSigned ✓
+                        {data.steps.agreement.status === 'pending_owner_sign'
+                          ? 'eSigned by You ✓'
+                          : 'eSigned ✓'}
                       </span>
                     )}
                   </h3>
                   <p className="text-slate-600 text-sm mt-1">
-                    Review house rules, lock-in period, deposit terms and eSign securely with Aadhaar OTP.
+                    {data.steps.agreement.status === 'pending_owner_sign'
+                      ? 'You have successfully eSigned the agreement. Awaiting property owner approval and signature.'
+                      : 'Review house rules, lock-in period, deposit terms and eSign securely with Aadhaar OTP.'}
                   </p>
                 </div>
               </div>
               <span className={`hidden sm:inline-block px-3 py-1 text-xs font-bold rounded-full uppercase ${
                 data.steps.agreement.isCompleted ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
               }`}>
-                {data.steps.agreement.isCompleted ? 'Completed' : 'Pending'}
+                {data.steps.agreement.isCompleted ? (data.steps.agreement.status === 'pending_owner_sign' ? 'Signed by Tenant' : 'Completed') : 'Pending'}
               </span>
             </div>
 
