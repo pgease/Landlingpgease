@@ -108,6 +108,8 @@ interface OnboardingData {
       status: string;
       isCompleted: boolean;
       agreementId?: string | null;
+      documentId?: string | null;
+      tokenId?: string | null;
       directLink?: string | null;
       signedPdfUrl?: string | null;
     };
@@ -471,7 +473,8 @@ export default function TenantOnboarding() {
     if (!data?.steps.agreement.directLink) return;
 
     const linkParts = data.steps.agreement.directLink.split('/');
-    const documentId = linkParts.find((p: string) => p.startsWith('DID'));
+    const documentId = data.steps.agreement.documentId || linkParts.find((p: string) => p.startsWith('DID'));
+    const tokenId = data.steps.agreement.tokenId || linkParts.find((p: string) => p.startsWith('GWT'));
     const identifier = cleanIdentifier(data.tenant.phone, data.tenant.email);
 
     if (!documentId || !window.Digio) {
@@ -488,8 +491,8 @@ export default function TenantOnboarding() {
         if (response?.error_code) {
           console.error('Digio eSign error:', response);
           if (response?.message && !response.message.toLowerCase().includes('cancel') && response?.error_code !== 'cancel') {
-          alert(`eSign: ${response.message || 'Please try again'}`);
-        }
+            alert(`eSign: ${response.message || 'Please try again'}`);
+          }
         } else {
           fetchOnboarding();
         }
@@ -505,7 +508,11 @@ export default function TenantOnboarding() {
     try {
       const digio = new window.Digio(options);
       digio.init();
-      digio.submit(documentId, identifier);
+      if (tokenId) {
+        digio.submit(documentId, identifier, tokenId);
+      } else {
+        digio.submit(documentId, identifier);
+      }
     } catch (err: any) {
       setEsignLoading(false);
       console.error('Digio eSign init error:', err);
