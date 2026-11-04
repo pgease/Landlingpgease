@@ -112,6 +112,7 @@ interface OnboardingData {
       tokenId?: string | null;
       directLink?: string | null;
       signedPdfUrl?: string | null;
+      draftPdfUrl?: string | null;
     };
     payment: {
       stepNumber: number;
@@ -1411,10 +1412,18 @@ export default function TenantOnboarding() {
                   </p>
                 </div>
               </div>
-              <span className={`hidden sm:inline-block px-3 py-1 text-xs font-bold rounded-full uppercase ${
-                data.steps.agreement.isCompleted ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
+              <span className={`hidden sm:inline-block px-3 py-1 text-xs font-bold rounded-full ${
+                data.steps.agreement.status === 'signed'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : data.steps.agreement.status === 'pending_owner_sign'
+                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200'
               }`}>
-                {data.steps.agreement.isCompleted ? (data.steps.agreement.status === 'pending_owner_sign' ? 'Signed by Tenant' : 'Completed') : 'Pending'}
+                {data.steps.agreement.status === 'signed'
+                  ? 'Fully Signed ✓'
+                  : data.steps.agreement.status === 'pending_owner_sign'
+                    ? 'Owner eSign Pending'
+                    : 'Pending'}
               </span>
             </div>
 
@@ -1444,20 +1453,61 @@ export default function TenantOnboarding() {
               </div>
             )}
 
-            {data.steps.agreement.isCompleted && data.steps.agreement.signedPdfUrl && (
-              <div className="mt-5 pt-4 border-t border-emerald-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Agreement Signed
-                </span>
-                <a
-                  href={data.steps.agreement.signedPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 border border-emerald-300 hover:bg-emerald-100 rounded-xl text-xs font-bold text-emerald-800 transition flex items-center gap-1.5"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Signed PDF</span>
-                </a>
+            {/* State A: Tenant has signed, waiting for owner countersign */}
+            {data.steps.agreement.isCompleted && data.steps.agreement.status === 'pending_owner_sign' && (
+              <div className="mt-5 pt-4 border-t border-amber-200/70">
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                        <Clock className="w-3.5 h-3.5 text-amber-700 animate-pulse" /> eSign Pending from Owner Side
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800">
+                      You have successfully eSigned the agreement with your Aadhaar OTP. The contract is currently awaiting approval and signature from the PG owner. Once both parties have signed, the finalized agreement will be available to download here.
+                    </p>
+                  </div>
+                  {data.steps.agreement.draftPdfUrl && (
+                    <a
+                      href={data.steps.agreement.draftPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-white border border-amber-300 hover:bg-amber-100 rounded-xl text-xs font-bold text-amber-900 transition flex items-center gap-1.5 shrink-0 shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5 text-amber-700" />
+                      <span>View Draft Copy</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* State B: Agreement fully executed and signed by both parties */}
+            {data.steps.agreement.isCompleted && (data.steps.agreement.status === 'signed' || data.steps.agreement.signedPdfUrl) && (
+              <div className="mt-5 pt-4 border-t border-emerald-200/70">
+                <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-200 text-emerald-900 border border-emerald-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" /> Fully Executed Agreement ✓
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-800">
+                      Both you and the property owner have signed the digital rental agreement. Your 11-month lease is legally binding and active.
+                    </p>
+                  </div>
+                  {(data.steps.agreement.signedPdfUrl || data.steps.agreement.draftPdfUrl) && (
+                    <a
+                      href={data.steps.agreement.signedPdfUrl || data.steps.agreement.draftPdfUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2 shrink-0 cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download Signed Agreement</span>
+                    </a>
+                  )}
+                </div>
               </div>
             )}
           </div>
