@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     question: 'Is PG Ease suitable for small PG owners?',
-    answer: 'Yes. There is one plan, PG Ease Pro, at ₹29 per bed per month (₹49 shown crossed out during the Diwali offer). Yearly is ₹290 per bed. You can collect rent by manual UPI or a payment gateway. GST is 18% extra.',
+    answer: 'Yes. PG Ease Pro is transparently priced per bed with flexible monthly and yearly billing options. You can collect rent via manual UPI (zero transaction fees) or an automated payment gateway. GST is 18% extra.',
   },
   {
     question: 'How does PG Ease help automate PG operations?',

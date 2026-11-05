@@ -17,42 +17,6 @@ export interface ProPlanCatalog {
   cycles: PlanCycle[];
 }
 
-export const STATIC_PRO_PLAN: ProPlanCatalog = {
-  name: 'PG Ease Pro',
-  gstPercent: 18,
-  offer: {
-    enabled: true,
-    badge: '🪔 Diwali Offer – Grab it soon!',
-  },
-  features: [
-    'Unlimited Beds & Rooms Management',
-    'Automated Rent Reminders (WhatsApp & SMS)',
-    'Digital Tenant KYC Verification',
-    'Online Rent Collection (Manual UPI & Gateway)',
-    'Expense, Deposit & Profit Tracking',
-    'Staff & Property Manager Access',
-    'Digital Rental Agreements',
-    '24/7 Priority Support',
-  ],
-  cycles: [
-    {
-      cycle: 'monthly',
-      label: 'Monthly',
-      pricePerBed: 29,
-      strikePerBed: 49,
-      period: 'per bed / month',
-    },
-    {
-      cycle: 'yearly',
-      label: 'Yearly',
-      pricePerBed: 290,
-      strikePerBed: 490,
-      period: 'per bed / year',
-      note: '2 months free',
-    },
-  ],
-};
-
 function cycleFromApi(key: 'monthly' | 'yearly', raw: any): PlanCycle | null {
   if (!raw || typeof raw !== 'object' || raw.pricePerBed == null) return null;
   return {
@@ -65,10 +29,11 @@ function cycleFromApi(key: 'monthly' | 'yearly', raw: any): PlanCycle | null {
   };
 }
 
-/** The API sends cycles as { monthly, yearly }. Older responses used an array. */
+/** The API sends cycles as { monthly, yearly } or as an array. */
 export function normalizeCatalog(json: any): ProPlanCatalog | null {
   const source = json?.catalog?.name || json?.catalog?.cycles ? json.catalog : json;
   if (!source) return null;
+
   let cycles: PlanCycle[] = [];
   if (Array.isArray(source.cycles)) {
     cycles = source.cycles
@@ -79,34 +44,99 @@ export function normalizeCatalog(json: any): ProPlanCatalog | null {
     const yearly = cycleFromApi('yearly', source.cycles.yearly);
     cycles = [monthly, yearly].filter(Boolean) as PlanCycle[];
   }
+
   if (!cycles.length) return null;
-  const enabled = Boolean(source.offer?.enabled);
+
   return {
-    name: source.name || 'PG Ease Pro',
-    gstPercent: Number(source.gstPercent ?? 18),
+    name: source.name || '',
+    gstPercent: Number(source.gstPercent ?? 0),
     offer: {
-      enabled,
-      badge: enabled ? source.offer?.badge || null : null,
+      enabled: Boolean(source.offer?.enabled),
+      badge: source.offer?.enabled ? source.offer?.badge || null : null,
     },
-    features: Array.isArray(source.features) ? source.features : STATIC_PRO_PLAN.features,
+    features: Array.isArray(source.features) ? source.features : [],
     cycles,
   };
 }
 
 export const plansApi = {
-  getCatalog: async (): Promise<ProPlanCatalog> => {
+  getCatalog: async (): Promise<ProPlanCatalog | null> => {
+    let catalog: ProPlanCatalog | null = null;
     const urls = [`${API_BASE}/public/plans`, `${API_BASE}/plans`];
+
     for (const url of urls) {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
         if (!res.ok) continue;
         const json = await res.json();
-        const catalog = normalizeCatalog(json);
-        if (catalog) return catalog;
+        catalog = normalizeCatalog(json);
+        if (catalog) break;
       } catch {
-        // API is not live yet. The static plan below is shown instead.
+        // continue to next endpoint
       }
     }
-    return STATIC_PRO_PLAN;
+
+    if (!catalog) return null;
+
+    // Check if there is an active offer override from /plans/offer
+    const offerUrls = [`${API_BASE}/plans/offer`, `${API_BASE}/public/plans/offer`];
+    for (const offerUrl of offerUrls) {
+      try {
+        const res = await fetch(offerUrl, { headers: { Accept: 'application/json' } });
+        if (!res.ok) continue;
+        const json = await res.json();
+        const offer = json?.offer;
+        if (offer && typeof offer === 'object') {
+          const isEnabled =
+            offer.offerEnabled !== undefined
+              ? Boolean(offer.offerEnabled)
+              : Boolean(offer.enabled);
+
+          const updatedCycles: PlanCycle[] = catalog.cycles.map((c: PlanCycle): PlanCycle => {
+            if (c.cycle === 'monthly') {
+              return {
+                ...c,
+                pricePerBed:
+                  offer.offerPricePerBedMonthly != null
+                    ? Number(offer.offerPricePerBedMonthly)
+                    : c.pricePerBed,
+                strikePerBed:
+                  isEnabled && offer.strikePricePerBedMonthly != null
+                    ? Number(offer.strikePricePerBedMonthly)
+                    : null,
+              };
+            }
+            if (c.cycle === 'yearly') {
+              return {
+                ...c,
+                pricePerBed:
+                  offer.offerPricePerBedYearly != null
+                    ? Number(offer.offerPricePerBedYearly)
+                    : c.pricePerBed,
+                strikePerBed:
+                  isEnabled && offer.strikePricePerBedYearly != null
+                    ? Number(offer.strikePricePerBedYearly)
+                    : null,
+              };
+            }
+            return c;
+          });
+
+          catalog = {
+            ...catalog,
+            offer: {
+              enabled: isEnabled,
+              badge: isEnabled ? offer.badge || catalog.offer.badge : null,
+            },
+            cycles: updatedCycles,
+          };
+          break;
+        }
+      } catch {
+        // continue
+      }
+    }
+
+    return catalog;
   },
 };
