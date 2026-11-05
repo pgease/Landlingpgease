@@ -178,7 +178,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://app.pgease.in/"
+                  href="https://app.pgease.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"

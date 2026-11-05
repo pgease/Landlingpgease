@@ -6,7 +6,7 @@ interface PricingProps {
   onBookDemo?: () => void;
 }
 
-const SIGNUP_URL = 'https://app.pgease.in/signup';
+const SIGNUP_URL = 'https://app.pgease.com/signup';
 
 export default function Pricing({ onBookDemo }: PricingProps = {}) {
   const [catalog, setCatalog] = useState<ProPlanCatalog>(STATIC_PRO_PLAN);

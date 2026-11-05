@@ -1139,7 +1139,7 @@ export default function DemoDeck() {
                   <div>
                     <span className="text-[10px] uppercase font-bold text-teal-200 tracking-wider">Access Anywhere</span>
                     <h4 className="font-bold text-sm sm:text-base text-white leading-tight">Web Browser</h4>
-                    <span className="text-[10px] text-teal-100/80">app.pgease.in</span>
+                    <span className="text-[10px] text-teal-100/80">app.pgease.com</span>
                   </div>
                 </div>
               </div>

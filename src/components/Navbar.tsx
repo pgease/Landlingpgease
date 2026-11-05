@@ -95,7 +95,7 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
 
             {/* Owner Login Link */}
             <a
-              href="https://app.pgease.in/"
+              href="https://app.pgease.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
@@ -175,7 +175,7 @@ export default function Navbar({ onBookDemo }: NavbarProps) {
 
             <div className="pt-3 border-t border-slate-100 space-y-2">
               <a
-                href="https://app.pgease.in/"
+                href="https://app.pgease.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block px-4 py-2.5 text-center text-slate-700 font-semibold rounded-lg border border-slate-200 text-sm hover:bg-slate-50"
