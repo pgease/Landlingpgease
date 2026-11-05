@@ -97,8 +97,11 @@ function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
 
-        {/* Dynamic Tenant Routes */}
+        {/* Dynamic Tenant & RentOk-Compatible Billing Routes */}
         <Route path="/rent-collection/:id" element={<RentCollection />} />
+        <Route path="/pay/:id" element={<RentCollection />} />
+        <Route path="/pay" element={<RentCollection />} />
+        <Route path="/p2/:slug/pay" element={<RentCollection />} />
         <Route path="/onboarding/:id" element={<TenantOnboarding />} />
       </Routes>
       <FloatingWhatsApp />
