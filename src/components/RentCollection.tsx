@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { API_BASE } from '../config/api';
+import { launchEasebuzzCheckout } from '../lib/easebuzzCheckout';
 import {
   CheckCircle2,
   Calendar,
@@ -165,6 +166,7 @@ export default function RentCollection() {
   const [includeRent, setIncludeRent] = useState(true);
   const [includeSecurity, setIncludeSecurity] = useState(true);
   const [includeMisc, setIncludeMisc] = useState(true);
+  const [selectedGateway, setSelectedGateway] = useState<'easebuzz' | 'razorpay'>('easebuzz');
 
   useEffect(() => {
     fetchDetails();
@@ -232,6 +234,20 @@ export default function RentCollection() {
     setUtrSubmitted(true);
   };
 
+  const loadEasebuzz = () => {
+    return new Promise((resolve) => {
+      if ((window as any).EasebuzzCheckout) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://ebz-static.s3.ap-south-1.amazonaws.com/easecheckout/v2.0.0/easebuzz-checkout-v2.min.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       if ((window as any).Razorpay) {
@@ -254,6 +270,80 @@ export default function RentCollection() {
 
     try {
       setPaying(true);
+
+      // Easebuzz Checkout Flow
+      if (selectedGateway === 'easebuzz') {
+        const isLoaded = await loadEasebuzz();
+        if (!isLoaded && !(window as any).EasebuzzCheckout) {
+          alert('Could not load Easebuzz payment gateway. Are you online?');
+          return;
+        }
+
+        const orderRes = await fetch(`${API_BASE}/tenants/rent-collections/${id}/checkout-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gateway: 'easebuzz',
+            includeRent,
+            includeSecurityDeposit: includeSecurity,
+            includeMiscellaneous: includeMisc,
+          }),
+        });
+
+        const orderData = await orderRes.json();
+        if (!orderRes.ok) throw new Error(orderData.message || 'Easebuzz order creation failed');
+
+        launchEasebuzzCheckout(
+          {
+            key: orderData.key || orderData.keyId,
+            access_key: orderData.access_key,
+            env: orderData.env || 'test',
+            txnid: orderData.txnid || orderData.orderId,
+            amount: calculateSelectedTotal(),
+            is_sandbox: orderData.is_sandbox,
+          },
+          {
+            onSuccess: async (response_data: any) => {
+              try {
+                const verifyRes = await fetch(`${API_BASE}/tenants/rent-collections/${id}/verify-payment`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    rentCollectionId: id,
+                    gateway: 'easebuzz',
+                    txnid: response_data.txnid || orderData.orderId,
+                    easebuzz_id: response_data.easebuzz_id,
+                    hash: response_data.hash,
+                    status: response_data.status,
+                    easebuzz_response: response_data,
+                    amountPaid: calculateSelectedTotal(),
+                    itemsPaid: {
+                      includeRent,
+                      includeSecurityDeposit: includeSecurity,
+                      includeMiscellaneous: includeMisc,
+                    },
+                  }),
+                });
+
+                if (!verifyRes.ok) {
+                  alert('Payment recorded on gateway, but verification failed. Please contact your PG manager.');
+                  return;
+                }
+
+                await fetchDetails();
+              } catch (err: any) {
+                alert(`Error recording payment: ${err.message}`);
+              }
+            },
+            onFailure: (response_data: any) => {
+              alert(`Easebuzz payment was not completed: ${response_data.error_Message || response_data.status || 'Cancelled'}`);
+            },
+          }
+        );
+        return;
+      }
+
+      // Razorpay Checkout Flow
       const isLoaded = await loadRazorpay();
       if (!isLoaded) {
         alert('Could not load payment gateway. Are you online?');
@@ -273,6 +363,7 @@ export default function RentCollection() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          gateway: 'razorpay',
           includeRent,
           includeSecurityDeposit: includeSecurity,
           includeMiscellaneous: includeMisc,
@@ -304,14 +395,16 @@ export default function RentCollection() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                rentCollectionId: effectiveId,
+                rentCollectionId: effectiveId || id,
+                gateway: 'razorpay',
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 amountPaid: calculateSelectedTotal(),
                 itemsPaid: {
                   includeRent,
-                  includeSecurityDeposit: includeSecurity,
+                  includeSecurityDeposit,
+                  includeSecurity,
                   includeMiscellaneous: includeMisc,
                 },
               }),
@@ -840,16 +933,53 @@ export default function RentCollection() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                        Razorpay Payment Gateway
+                        Online Payment Gateway
                       </h4>
                       <p className="text-xs text-slate-600 mt-0.5">
-                        Credit Cards, Debit Cards, Netbanking, or EMIs.
+                        Credit/Debit Cards, UPI, Netbanking, or EMIs.
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                        Visa / MC / RuPay
+                        Visa / MC / RuPay / UPI
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Payment Gateway Selector */}
+                  <div className="p-3 bg-white rounded-xl border border-slate-200">
+                    <div className="text-xs font-bold text-slate-700 mb-2">Select Payment Gateway:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGateway('easebuzz')}
+                        className={`p-2.5 rounded-lg border text-left flex items-center justify-between text-xs font-bold transition cursor-pointer ${
+                          selectedGateway === 'easebuzz'
+                            ? 'border-teal-600 bg-teal-50 text-teal-800 ring-2 ring-teal-600/30'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                          <span>Easebuzz</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-normal">Fast UPI / Card</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGateway('razorpay')}
+                        className={`p-2.5 rounded-lg border text-left flex items-center justify-between text-xs font-bold transition cursor-pointer ${
+                          selectedGateway === 'razorpay'
+                            ? 'border-blue-600 bg-blue-50 text-blue-800 ring-2 ring-blue-600/30'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                          <span>Razorpay</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-normal">All Options</span>
+                      </button>
                     </div>
                   </div>
 
@@ -862,12 +992,12 @@ export default function RentCollection() {
                     {paying ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Connecting to Gateway...</span>
+                        <span>Opening {selectedGateway === 'easebuzz' ? 'Easebuzz' : 'Razorpay'}...</span>
                       </>
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        <span>Pay ₹{payableTotal.toLocaleString('en-IN')} with Cards / Netbanking</span>
+                        <span>Pay ₹{payableTotal.toLocaleString('en-IN')} via {selectedGateway === 'easebuzz' ? 'Easebuzz ⚡' : 'Razorpay 💳'}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

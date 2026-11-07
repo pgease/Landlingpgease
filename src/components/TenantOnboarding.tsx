@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { API_BASE } from '../config/api';
+import { launchEasebuzzCheckout } from '../lib/easebuzzCheckout';
 import {
   ShieldCheck,
   FileText,
@@ -38,6 +39,7 @@ declare global {
   interface Window {
     Digio?: any;
     Razorpay?: any;
+    EasebuzzCheckout?: any;
   }
 }
 
@@ -175,6 +177,7 @@ export default function TenantOnboarding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<'easebuzz' | 'razorpay'>('easebuzz');
 
   // RentOk-Inspired Payment Mode Selection
   const [paymentMethodTab, setPaymentMethodTab] = useState<'upi' | 'bank' | 'card'>(
@@ -676,6 +679,20 @@ export default function TenantOnboarding() {
     }
   };
 
+  const loadEasebuzz = () => {
+    return new Promise((resolve) => {
+      if ((window as any).EasebuzzCheckout) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://ebz-static.s3.ap-south-1.amazonaws.com/easecheckout/v2.0.0/easebuzz-checkout-v2.min.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       if ((window as any).Razorpay) {
@@ -698,6 +715,80 @@ export default function TenantOnboarding() {
 
     try {
       setPaying(true);
+
+      // ─── Easebuzz Flow ────────────────────────────────────────────────────────
+      if (selectedGateway === 'easebuzz') {
+        const isLoaded = await loadEasebuzz();
+        if (!isLoaded && !(window as any).EasebuzzCheckout) {
+          alert('Could not load Easebuzz payment gateway. Are you online?');
+          return;
+        }
+
+        const orderRes = await fetch(`${API_BASE}/tenants/rent-collections/${data.steps.payment.rentCollectionId}/checkout-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            gateway: 'easebuzz',
+            includeRent: !data.steps.payment.breakdown.isRentPaid,
+            includeSecurityDeposit: !data.steps.payment.breakdown.isSecurityPaid,
+            includeMiscellaneous: true,
+          }),
+        });
+
+        const orderData = await orderRes.json();
+        if (!orderRes.ok) throw new Error(orderData.message || 'Easebuzz order creation failed');
+
+        launchEasebuzzCheckout(
+          {
+            key: orderData.key || orderData.keyId,
+            access_key: orderData.access_key,
+            env: orderData.env || 'test',
+            txnid: orderData.txnid || orderData.orderId,
+            amount: data.steps.payment.breakdown.totalPayable,
+            is_sandbox: orderData.is_sandbox,
+          },
+          {
+            onSuccess: async (response_data: any) => {
+              try {
+                const verifyRes = await fetch(`${API_BASE}/tenants/rent-collections/${data.steps.payment.rentCollectionId}/verify-payment`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    rentCollectionId: data.steps.payment.rentCollectionId,
+                    gateway: 'easebuzz',
+                    txnid: response_data.txnid || orderData.orderId,
+                    easebuzz_id: response_data.easebuzz_id,
+                    hash: response_data.hash,
+                    status: response_data.status,
+                    easebuzz_response: response_data,
+                    amountPaid: data.steps.payment.breakdown.totalPayable,
+                    itemsPaid: {
+                      includeRent: !data.steps.payment.breakdown.isRentPaid,
+                      includeSecurityDeposit: !data.steps.payment.breakdown.isSecurityPaid,
+                      includeMiscellaneous: true,
+                    },
+                  }),
+                });
+
+                if (!verifyRes.ok) {
+                  alert('Payment recorded on gateway, but verification failed. Please contact your PG manager.');
+                  return;
+                }
+
+                await fetchOnboarding();
+              } catch (err: any) {
+                alert(`Error recording payment: ${err.message}`);
+              }
+            },
+            onFailure: (response_data: any) => {
+              alert(`Easebuzz payment was not completed: ${response_data.error_Message || response_data.status || 'Cancelled'}`);
+            },
+          }
+        );
+        return;
+      }
+
+      // ─── Razorpay Flow ────────────────────────────────────────────────────────
       const isLoaded = await loadRazorpay();
       if (!isLoaded) {
         alert('Could not load payment gateway. Are you online?');
@@ -709,6 +800,7 @@ export default function TenantOnboarding() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          gateway: 'razorpay',
           includeRent: !data.steps.payment.breakdown.isRentPaid,
           includeSecurityDeposit: !data.steps.payment.breakdown.isSecurityPaid,
           includeMiscellaneous: true,
@@ -741,6 +833,7 @@ export default function TenantOnboarding() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 rentCollectionId: data.steps.payment.rentCollectionId,
+                gateway: 'razorpay',
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
@@ -857,23 +950,23 @@ export default function TenantOnboarding() {
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Welcome to {data.property.name}, {data.tenant.name.split(' ')[0]}! 👋
+                Welcome to {data.property?.name || 'Your PG'}, {data.tenant?.name ? data.tenant.name.split(' ')[0] : 'Resident'}! 👋
               </h1>
               <p className="text-slate-600 text-sm flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-600 shrink-0" />
-                <span>{data.property.address}</span>
+                <span>{data.property?.address || ''}</span>
               </p>
             </div>
 
             <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-card flex items-center gap-4 shrink-0">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-black text-lg shadow-xs">
-                {data.room.roomNumber}
+                {data.room?.roomNumber || '–'}
               </div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Allotted Space</p>
-                <p className="text-sm font-extrabold text-slate-900">{data.room.name || `Room ${data.room.roomNumber}`}</p>
+                <p className="text-sm font-extrabold text-slate-900">{data.room?.name || `Room ${data.room?.roomNumber || ''}`}</p>
                 <p className="text-xs font-bold text-brand-700 mt-0.5">
-                  ₹{Number(data.room.monthlyRent).toLocaleString('en-IN')}<span className="text-[11px] font-medium text-slate-500">/month</span>
+                  ₹{Number(data.room?.monthlyRent || 0).toLocaleString('en-IN')}<span className="text-[11px] font-medium text-slate-500">/month</span>
                 </p>
               </div>
             </div>
@@ -1873,22 +1966,59 @@ export default function TenantOnboarding() {
                     );
                   })()}
 
-                  {/* TAB 3: Cards & Netbanking via Razorpay */}
+                  {/* TAB 3: Cards & Netbanking via Easebuzz / Razorpay */}
                   {paymentMethodTab === 'card' && (
                     <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                            Razorpay Payment Gateway
+                            Online Payment Gateway
                           </h4>
                           <p className="text-xs text-slate-600 mt-0.5">
-                            Credit Cards, Debit Cards, Netbanking, or EMIs.
+                            Credit/Debit Cards, UPI, Netbanking, or Wallets.
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded">
-                            Visa / MC / RuPay
+                            Visa / MC / RuPay / UPI
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Payment Gateway Selector */}
+                      <div className="p-3 bg-white rounded-xl border border-slate-200">
+                        <div className="text-xs font-bold text-slate-700 mb-2">Select Payment Gateway:</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGateway('easebuzz')}
+                            className={`p-2.5 rounded-lg border text-left flex items-center justify-between text-xs font-bold transition cursor-pointer ${
+                              selectedGateway === 'easebuzz'
+                                ? 'border-teal-600 bg-teal-50 text-teal-800 ring-2 ring-teal-600/30'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                              <span>Easebuzz</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-normal">Fast UPI / Card</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGateway('razorpay')}
+                            className={`p-2.5 rounded-lg border text-left flex items-center justify-between text-xs font-bold transition cursor-pointer ${
+                              selectedGateway === 'razorpay'
+                                ? 'border-blue-600 bg-blue-50 text-blue-800 ring-2 ring-blue-600/30'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                              <span>Razorpay</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-normal">All Options</span>
+                          </button>
                         </div>
                       </div>
 
@@ -1901,12 +2031,12 @@ export default function TenantOnboarding() {
                         {paying ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Connecting to Gateway...</span>
+                            <span>Opening {selectedGateway === 'easebuzz' ? 'Easebuzz' : 'Razorpay'}...</span>
                           </>
                         ) : (
                           <>
                             <CreditCard className="w-4 h-4" />
-                            <span>Pay ₹{data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')} with Cards / Netbanking</span>
+                            <span>Pay ₹{data.steps.payment.breakdown.totalPayable.toLocaleString('en-IN')} via {selectedGateway === 'easebuzz' ? 'Easebuzz ⚡' : 'Razorpay 💳'}</span>
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
